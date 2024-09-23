@@ -4,8 +4,8 @@
 #   -------------------------------------------------------------
 """Python Package Template"""
 from __future__ import annotations
-from .rosetta_finder import RosettaBinary, RosettaFinder
+from .rosetta_finder import RosettaBinary, RosettaFinder, main
 
-__all__ = ['RosettaFinder','RosettaBinary']
+__all__ = ["RosettaFinder", "RosettaBinary", "main"]
 
 __version__ = "0.0.1"

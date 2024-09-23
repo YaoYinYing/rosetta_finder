@@ -50,6 +50,11 @@ Documentation = "https://github.com/microsoft/python-package-template/tree/main#
 Source = "https://github.com/microsoft/python-package-template"
 Tracker = "https://github.com/microsoft/python-package-template/issues"
 
+
+[project.scripts]
+whichrosetta = "rosetta_finder:main"
+
+
 [tool.flit.module]
 name = "rosetta_finder"
 

@@ -11,10 +11,10 @@ from typing import Optional, Literal
 class RosettaBinary:
     dirname: str
     binary_name: str
-    mode: Optional[Literal['static', 'mpi', 'default']]
-    os: Literal['linux', 'macos']
-    compiler: Literal['gcc', 'clang']
-    release: Literal['release', 'debug']
+    mode: Optional[Literal["static", "mpi", "default"]]
+    os: Literal["linux", "macos"]
+    compiler: Literal["gcc", "clang"]
+    release: Literal["release", "debug"]
 
     @property
     def filename(self) -> str:
@@ -28,7 +28,7 @@ class RosettaBinary:
         if self.mode:
             parts.append(f"{self.mode}")
         parts.append(f"{self.os}{self.compiler}{self.release}")
-        filename = '.'.join(parts)
+        filename = ".".join(parts)
         return filename
 
     @property
@@ -68,21 +68,14 @@ class RosettaBinary:
         match = pattern.match(filename)
         if not match:
             raise ValueError(f"Filename '{filename}' does not match the expected pattern.")
-        
-        binary_name = match.group('binary_name')
-        mode = match.group('mode')
-        os_name = match.group('os')
-        compiler = match.group('compiler')
-        release = match.group('release')
-        
-        return cls(
-            dirname=dirname,
-            binary_name=binary_name,
-            mode=mode,
-            os=os_name,
-            compiler=compiler,
-            release=release
-        )
+
+        binary_name = match.group("binary_name")
+        mode = match.group("mode")
+        os_name = match.group("os")
+        compiler = match.group("compiler")
+        release = match.group("release")
+
+        return cls(dirname=dirname, binary_name=binary_name, mode=mode, os=os_name, compiler=compiler, release=release)
 
 
 class RosettaFinder:
@@ -96,7 +89,7 @@ class RosettaFinder:
         self.search_path = Path(search_path) if search_path else None
 
         # OS check: Raise an error if not running on Linux or macOS
-        if not sys.platform.startswith(('linux', 'darwin')):
+        if not sys.platform.startswith(("linux", "darwin")):
             raise EnvironmentError("Unsupported OS. This script only runs on Linux or macOS.")
 
         # Determine the search paths
@@ -125,15 +118,15 @@ class RosettaFinder:
         paths = []
 
         # 1. ROSETTA_BIN environment variable
-        rosetta_bin_env = os.environ.get('ROSETTA_BIN')
+        rosetta_bin_env = os.environ.get("ROSETTA_BIN")
         if rosetta_bin_env:
             paths.append(Path(rosetta_bin_env))
 
         # 2. ROSETTA3/bin
-        paths.append(Path('ROSETTA3') / 'bin')
+        paths.append(Path("ROSETTA3") / "bin")
 
         # 3. ROSETTA/main/source/bin/
-        paths.append(Path('ROSETTA') / 'main' / 'source' / 'bin')
+        paths.append(Path("ROSETTA") / "main" / "source" / "bin")
 
         # 4. Customized path
         if self.search_path:
@@ -141,7 +134,7 @@ class RosettaFinder:
 
         return paths
 
-    def find_binary(self, binary_name='rosetta_scripts'):
+    def find_binary(self, binary_name="rosetta_scripts"):
         """
         Search for the Rosetta binary in the specified paths.
 
@@ -170,14 +163,36 @@ class RosettaFinder:
                         return rosetta_binary
                 except ValueError as e:
                     continue
-                            
+
         raise FileNotFoundError(f"{binary_name} binary not found in the specified paths.")
+
+
+def main() -> str:
+    """
+    Main function to find the Rosetta binary.
+
+    Parameters:
+        bin_str (str): Name of the Rosetta binary to search for.
+
+    Returns:
+        None
+    """
+    bin_str = sys.argv[1]
+    bin_path = sys.argv[2] if len(sys.argv) > 2 else None
+    finder = RosettaFinder(bin_path)
+    binary_path = finder.find_binary(bin_str)
+    if not os.path.isfile(binary_path.full_path):
+        raise FileNotFoundError(f"Binary '{binary_path.full_path}' does not exist.")
+
+    # print(binary_path.full_path)
+    return binary_path.full_path
+
 
 # Example usage:
 if __name__ == "__main__":
     try:
         finder = RosettaFinder()
-        binary_path = finder.find_binary('relax')  # You can specify a different binary name here
+        binary_path = finder.find_binary("relax")  # You can specify a different binary name here
         print(f"Rosetta binary found at: {binary_path.full_path}")
     except Exception as e:
         print(e)
