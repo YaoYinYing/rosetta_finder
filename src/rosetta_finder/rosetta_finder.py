@@ -9,6 +9,25 @@ from typing import Optional, Literal
 
 @dataclass
 class RosettaBinary:
+    """
+    Represents a Rosetta binary executable.
+
+    Attributes:
+        dirname (str): The directory where the binary is located.
+        binary_name (str): The base name of the binary (e.g., 'rosetta_scripts').
+        mode (Optional[Literal['static', 'mpi', 'default']]): The build mode.
+        os (Literal['linux', 'macos']): The operating system.
+        compiler (Literal['gcc', 'clang']): The compiler used.
+        release (Literal['release', 'debug']): The build type.
+
+    Properties:
+        filename (str): Reconstructed filename from the binary components.
+        full_path (str): Full path to the binary executable.
+
+    Methods:
+        from_filename(cls, dirname: str, filename: str): Creates an instance by parsing the filename.
+    """
+
     dirname: str
     binary_name: str
     mode: Optional[Literal["static", "mpi", "default"]]
@@ -79,6 +98,14 @@ class RosettaBinary:
 
 
 class RosettaFinder:
+    """
+    Searches for Rosetta binaries in specified directories.
+
+    Methods:
+        __init__(self, search_path=None): Initializes the RosettaFinder with an optional search path.
+        find_binary(self, binary_name='rosetta_scripts'): Searches for the Rosetta binary.
+    """
+
     def __init__(self, search_path=None):
         """
         Initialize the RosettaFinder with an optional search path.
