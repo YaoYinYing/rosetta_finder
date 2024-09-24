@@ -43,6 +43,49 @@ class TestWhichRosetta(unittest.TestCase):
             # Clean up the temporary directory
             shutil.rmtree(temp_dir)
 
+    def test_dockerized_whichrosetta_success(self):
+        # Create a temporary directory to act as ROSETTA_BIN
+        temp_dir = tempfile.mkdtemp()
+        try:
+            # Create a mock binary file
+            binary_name = "rosetta_scripts"
+            binary_path = os.path.join(temp_dir, binary_name)
+
+            with open(binary_path, "w") as f:
+                f.write("# Mock Rosetta binary")
+
+            os.chmod(binary_path, 755)
+
+            # Set the ROSETTA_BIN environment variable to the temp directory
+            env = os.environ.copy()
+            env["PATH"] = temp_dir + ":" + env["PATH"]
+
+            for key in os.environ.keys():
+                if "ROSETTA" in key:
+                    del env[key]
+
+            # Patch sys.platform to 'linux'
+            with patch("sys.platform", "linux"):
+                # Invoke the whichrosetta command
+                result = subprocess.run(
+                    ["whichrosetta", "rosetta_scripts"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=env,
+                )
+
+                # Check that the command was successful
+                print(result.stderr)
+                print(result.stdout)
+                self.assertEqual(result.returncode, 0)
+                expected_output = f"{binary_path}\n"
+                self.assertEqual(result.stdout, expected_output)
+                self.assertEqual(result.stderr, "")
+        finally:
+            # Clean up the temporary directory
+            shutil.rmtree(temp_dir)
+
     def test_integration_whichrosetta_not_found(self):
         # Create a temporary directory to act as ROSETTA_BIN
         temp_dir = tempfile.mkdtemp()

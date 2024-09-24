@@ -75,7 +75,7 @@ class RosettaBinary:
         Raises:
             ValueError: If the filename does not match the expected pattern.
         """
-        # Regular expression to parse the filename
+        # Regular expression to parse the filenam
         regex = r"""
             ^(?P<binary_name>.+?)\.
             ((?P<mode>default|mpi|static|cxx11threadserialization)\.)?
@@ -204,12 +204,21 @@ def main() -> None:
     Returns:
         None
     """
+    import shutil
+
     bin_str = sys.argv[1]
     bin_path = sys.argv[2] if len(sys.argv) > 2 else None
+
+    which_bin = shutil.which(bin_str)
+
+    if which_bin and os.path.isfile(which_bin):
+        # dockerized
+        print(which_bin)
+        return
+
     finder = RosettaFinder(bin_path)
     binary_path = finder.find_binary(bin_str)
     if not os.path.isfile(binary_path.full_path):
         raise FileNotFoundError(f"Binary '{binary_path.full_path}' does not exist.")
 
     print(binary_path.full_path)
-    # return binary_path.full_path
