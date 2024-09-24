@@ -117,6 +117,10 @@ class RosettaFinder:
         """
         paths = []
 
+        # 0. Customized path
+        if self.search_path:
+            paths.append(self.search_path)
+
         # 1. ROSETTA_BIN environment variable
         rosetta_bin_env = os.environ.get("ROSETTA_BIN")
         if rosetta_bin_env:
@@ -127,10 +131,6 @@ class RosettaFinder:
 
         # 3. ROSETTA/main/source/bin/
         paths.append(Path("ROSETTA") / "main" / "source" / "bin")
-
-        # 4. Customized path
-        if self.search_path:
-            paths.append(self.search_path)
 
         return paths
 
@@ -184,15 +184,5 @@ def main() -> str:
     if not os.path.isfile(binary_path.full_path):
         raise FileNotFoundError(f"Binary '{binary_path.full_path}' does not exist.")
 
-    # print(binary_path.full_path)
+    print(binary_path.full_path)
     return binary_path.full_path
-
-
-# Example usage:
-if __name__ == "__main__":
-    try:
-        finder = RosettaFinder()
-        binary_path = finder.find_binary("relax")  # You can specify a different binary name here
-        print(f"Rosetta binary found at: {binary_path.full_path}")
-    except Exception as e:
-        print(e)

@@ -8,6 +8,7 @@ A Python utility for finding Rosetta binaries based on a specific naming convent
 
 - An object-oriented `RosettaFinder` class to search for binaries.
 - A `RosettaBinary` dataclass to represent the binary and its attributes.
+- A command-line shortcut for quick access to Rosetta binaries.
 - Unit tests to ensure reliability and correctness.
 
 ## Features
@@ -16,6 +17,8 @@ A Python utility for finding Rosetta binaries based on a specific naming convent
 - **Platform Support**: Supports Linux and macOS operating systems.
 - **Customizable Search Paths**: Allows specification of custom directories to search.
 - **Structured Binary Representation**: Uses a dataclass to encapsulate binary attributes.
+- **Command-Line Shortcut**: Provides a quick way to find binaries via the command line.
+- **Available on PyPI**: Installable via `pip` without the need to clone the repository.
 - **Unit Tested**: Includes tests for both classes to ensure functionality.
 
 ## Naming Convention
@@ -42,26 +45,50 @@ Examples of valid binary filenames:
 
 Ensure you have Python 3.6 or higher installed.
 
-1. **Clone the Repository**
+### Install via PyPI
 
-   ```bash
-   git clone https://github.com/yourusername/rosetta_finder.git
-   cd rosetta_finder
-   ```
+You can install `rosetta_finder` directly from PyPI:
 
-2. **Install Dependencies**
+```bash
+pip install rosetta_finder -U
+```
 
-   No external dependencies are required beyond the Python Standard Library.
+This allows you to use `rosetta_finder` without cloning the repository.
 
 ## Usage
 
+### Command-Line Shortcut
+
+`rosetta_finder` provides a command-line shortcut to quickly locate Rosetta binaries.
+
+#### Using the `whichrosetta` Command
+
+After installing `rosetta_finder`, you can use the `whichrosetta` command in your terminal.
+
+```bash
+whichrosetta <binary_name>
+```
+
+**Example:**
+
+To find the `relax` binary:
+
+```bash
+relax_bin=$(whichrosetta relax)
+echo $relax_bin
+```
+
+This command assigns the full path of the `relax` binary to the `relax_bin` variable and prints it.
+
 ### Importing the Module
+
+You can also use `rosetta_finder` in your Python scripts.
 
 ```python
 from rosetta_finder import RosettaFinder, RosettaBinary
 ```
 
-### Finding a Rosetta Binary
+### Finding a Rosetta Binary in Python
 
 ```python
 # Initialize the finder (optional custom search path)
@@ -106,6 +133,27 @@ export ROSETTA_BIN=/path/to/your/rosetta/bin
 ```
 
 ## API Reference
+
+### `whichrosetta` Command
+
+The `whichrosetta` command is installed as part of the `rosetta_finder` package and allows you to find the path to a Rosetta binary from the command line.
+
+**Usage:**
+
+```bash
+whichrosetta <binary_name>
+```
+
+- `binary_name`: The name of the Rosetta binary you want to locate (e.g., `relax`, `rosetta_scripts`).
+
+**Example:**
+
+```bash
+relax_bin=$(whichrosetta relax)
+echo $relax_bin
+```
+
+This command finds the `relax` binary and prints its full path.
 
 ### `RosettaFinder` Class
 
@@ -160,13 +208,20 @@ The project includes unit tests using Python's `unittest` framework.
 
 ### Running Tests
 
-1. Navigate to the project directory:
+1. Clone the repository (if not already done):
+
+   ```bash
+   git clone https://github.com/yourusername/rosetta_finder.git
+   cd rosetta_finder
+   ```
+
+2. Navigate to the project directory:
 
    ```bash
    cd rosetta_finder
    ```
 
-2. Run the tests:
+3. Run the tests:
 
    ```bash
    python -m unittest discover tests

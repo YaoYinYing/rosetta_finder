@@ -14,9 +14,6 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional, Literal
 
-# Include the RosettaBinary dataclass here (as updated with full_path property)
-# Include the RosettaFinder class here
-
 
 class TestRosettaBinary(unittest.TestCase):
     def test_from_filename_valid(self):

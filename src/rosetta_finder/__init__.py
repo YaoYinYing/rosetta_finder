@@ -8,4 +8,4 @@ from .rosetta_finder import RosettaBinary, RosettaFinder, main
 
 __all__ = ["RosettaFinder", "RosettaBinary", "main"]
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
