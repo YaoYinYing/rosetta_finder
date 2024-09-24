@@ -30,7 +30,7 @@ class RosettaBinary:
 
     dirname: str
     binary_name: str
-    mode: Optional[Literal["static", "mpi", "default"]]
+    mode: Optional[Literal["static", "mpi", "default", "cxx11threadserialization"]]
     os: Literal["linux", "macos"]
     compiler: Literal["gcc", "clang"]
     release: Literal["release", "debug"]
@@ -78,7 +78,7 @@ class RosettaBinary:
         # Regular expression to parse the filename
         regex = r"""
             ^(?P<binary_name>.+?)\.
-            ((?P<mode>default|mpi|static)\.)?
+            ((?P<mode>default|mpi|static|cxx11threadserialization)\.)?
             (?P<os>linux|macos)
             (?P<compiler>gcc|clang)
             (?P<release>release|debug)$
@@ -132,7 +132,7 @@ class RosettaFinder:
         Returns:
             re.Pattern: Compiled regular expression pattern.
         """
-        regex_string = rf"{binary_name}\.((default|mpi|static)\.){{0,1}}(linux|macos)(gcc|clang)(release|debug)$"
+        regex_string = rf"{binary_name}\.((default|mpi|static|cxx11threadserialization)\.){{0,1}}(linux|macos)(gcc|clang)(release|debug)$"
         return re.compile(regex_string)
 
     def get_search_paths(self):

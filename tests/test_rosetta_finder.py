@@ -24,6 +24,8 @@ class TestRosettaBinary(unittest.TestCase):
             "rosetta_scripts.mpi.macosclangdebug",
             "rosetta_scripts.static.linuxgccrelease",
             "rosetta_scripts.default.macosclangdebug",
+            "rosetta_scripts.cxx11threadserialization.linuxgccrelease",  # Docker serial
+            # "rosetta_scripts",  # Docker serial
         ]
 
         for filename in valid_filenames:
@@ -31,7 +33,7 @@ class TestRosettaBinary(unittest.TestCase):
                 rosetta_binary = RosettaBinary.from_filename(dirname, filename)
                 self.assertEqual(rosetta_binary.dirname, dirname)
                 self.assertEqual(rosetta_binary.binary_name, "rosetta_scripts")
-                self.assertIn(rosetta_binary.mode, [None, "mpi", "static", "default"])
+                self.assertIn(rosetta_binary.mode, [None, "mpi", "static", "default", "cxx11threadserialization"])
                 self.assertIn(rosetta_binary.os, ["linux", "macos"])
                 self.assertIn(rosetta_binary.compiler, ["gcc", "clang"])
                 self.assertIn(rosetta_binary.release, ["release", "debug"])
