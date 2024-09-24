@@ -117,7 +117,7 @@ class RosettaFinder:
 
         # OS check: Raise an error if not running on Linux or macOS
         if not sys.platform.startswith(("linux", "darwin")):
-            raise EnvironmentError("Unsupported OS. This script only runs on Linux or macOS.")
+            raise OSError("Unsupported OS. This script only runs on Linux or macOS.")
 
         # Determine the search paths
         self.search_paths = self.get_search_paths()
@@ -194,7 +194,7 @@ class RosettaFinder:
         raise FileNotFoundError(f"{binary_name} binary not found in the specified paths.")
 
 
-def main() -> str:
+def main() -> None:
     """
     Main function to find the Rosetta binary.
 
@@ -212,4 +212,4 @@ def main() -> str:
         raise FileNotFoundError(f"Binary '{binary_path.full_path}' does not exist.")
 
     print(binary_path.full_path)
-    return binary_path.full_path
+    # return binary_path.full_path
