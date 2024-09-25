@@ -2,6 +2,30 @@
 
 A Python utility for finding Rosetta binaries based on a specific naming convention.
 
+![GitHub License](https://img.shields.io/github/license/YaoYinYing/rosetta_finder)
+
+
+## CI Status
+[![Python CI](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml)
+[![Dependabot Updates](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates)
+
+## Release
+![GitHub Release](https://img.shields.io/github/v/release/YaoYinYing/rosetta_finder)
+![GitHub Release Date](https://img.shields.io/github/release-date/YaoYinYing/rosetta_finder)
+
+![PyPI - Format](https://img.shields.io/pypi/format/rosetta_finder)
+![PyPI - Version](https://img.shields.io/pypi/v/rosetta_finder)
+![PyPI - Status](https://img.shields.io/pypi/status/rosetta_finder)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/rosetta_finder)
+
+
+## Python version supported
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rosetta_finder)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/rosetta_finder)
+
+
+
+
 ## Overview
 
 `RosettaFinder` is a Python module designed to locate Rosetta biomolecular modeling suite binaries that follow a specific naming pattern. It searches predefined directories and can handle custom search paths. The module includes:
