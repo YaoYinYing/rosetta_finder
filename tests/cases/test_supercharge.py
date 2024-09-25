@@ -1,11 +1,26 @@
 import os
+
 from rosetta_finder.app import supercharge
 import pytest
 import shutil
+import warnings
+
+
+def no_rosetta():
+    import subprocess
+
+    result = subprocess.run(
+        ["whichrosetta", "rosetta_scripts"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    # Check that the command was successful
+    has_rosetta_installed = "rosetta_scripts" in result.stdout
+    warnings.warn(UserWarning(f"Rosetta Installed: {has_rosetta_installed} - {result.stdout}"))
+    return not has_rosetta_installed
 
 
 @pytest.mark.integration
-def test_supercharge():
+@pytest.mark.skipif(no_rosetta(), reason="No Rosetta Installed.")
+def test_app_supercharge():
     """
     Test the supercharge function with real parameters from Rosetta.
     """
@@ -13,8 +28,6 @@ def test_supercharge():
     abs_target_charge = 20
 
     instance = os.path.basename(pdb)[:-4]
-
-    expect_total_jobs = [x for x in range(-abs_target_charge, abs_target_charge, 2)]
 
     # Ensure the function runs without exceptions
     try:
