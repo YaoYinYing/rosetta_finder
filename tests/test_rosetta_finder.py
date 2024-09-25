@@ -25,7 +25,7 @@ class TestRosettaBinary(unittest.TestCase):
             "rosetta_scripts.static.linuxgccrelease",
             "rosetta_scripts.default.macosclangdebug",
             "rosetta_scripts.cxx11threadserialization.linuxgccrelease",  # Docker serial
-            # "rosetta_scripts",  # Docker serial
+            "rosetta_scripts",  # Docker serial
         ]
 
         for filename in valid_filenames:
@@ -34,9 +34,9 @@ class TestRosettaBinary(unittest.TestCase):
                 self.assertEqual(rosetta_binary.dirname, dirname)
                 self.assertEqual(rosetta_binary.binary_name, "rosetta_scripts")
                 self.assertIn(rosetta_binary.mode, [None, "mpi", "static", "default", "cxx11threadserialization"])
-                self.assertIn(rosetta_binary.os, ["linux", "macos"])
-                self.assertIn(rosetta_binary.compiler, ["gcc", "clang"])
-                self.assertIn(rosetta_binary.release, ["release", "debug"])
+                self.assertIn(rosetta_binary.os, [None, "linux", "macos"])
+                self.assertIn(rosetta_binary.compiler, [None, "gcc", "clang"])
+                self.assertIn(rosetta_binary.release, [None, "release", "debug"])
                 # Test filename property
                 self.assertEqual(rosetta_binary.filename, filename)
                 # Test full_path property
@@ -51,6 +51,9 @@ class TestRosettaBinary(unittest.TestCase):
             "rosetta_scripts.linuxgcc",  # Missing release
             "rosetta_scripts.mpi.linuxgccbeta",  # Invalid release
             "rosetta_scripts.linuxgccrelease.exe",  # Extra extension
+            "rosetta_scripts.cxx11threadserialization..linuxgccrelease",  # Typo
+            "rosetta_scripts.",  # Ending dot
+            "/rosetta_scripts",  # Leading slash
         ]
 
         for filename in invalid_filenames:

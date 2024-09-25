@@ -6,6 +6,11 @@ import re
 from dataclasses import dataclass
 from typing import Optional, Literal
 
+ALL_MODES = ["static", "mpi", "default", "cxx11threadserialization"]
+ALL_OS = ["linux", "macos"]
+ALL_COMPILERS = ["gcc", "clang"]
+ALL_RELEASES = ["release", "debug"]
+
 
 @dataclass
 class RosettaBinary:
@@ -46,7 +51,8 @@ class RosettaBinary:
         parts = [self.binary_name]
         if self.mode:
             parts.append(f"{self.mode}")
-        parts.append(f"{self.os}{self.compiler}{self.release}")
+        if self.os:
+            parts.append(f"{self.os}{self.compiler}{self.release}")
         filename = ".".join(parts)
         return filename
 
@@ -76,12 +82,8 @@ class RosettaBinary:
             ValueError: If the filename does not match the expected pattern.
         """
         # Regular expression to parse the filenam
-        regex = r"""
-            ^(?P<binary_name>.+?)\.
-            ((?P<mode>default|mpi|static|cxx11threadserialization)\.)?
-            (?P<os>linux|macos)
-            (?P<compiler>gcc|clang)
-            (?P<release>release|debug)$
+        regex = rf"""
+            (?P<binary_name>[\w]+)((\.(?P<mode>{'|'.join(ALL_MODES)}))?(\.(?P<os>{'|'.join(ALL_OS)})(?P<compiler>{'|'.join(ALL_COMPILERS)})(?P<release>{'|'.join(ALL_RELEASES)})))?$
         """
         pattern = re.compile(regex, re.VERBOSE)
         match = pattern.match(filename)
@@ -132,7 +134,7 @@ class RosettaFinder:
         Returns:
             re.Pattern: Compiled regular expression pattern.
         """
-        regex_string = rf"{binary_name}\.((default|mpi|static|cxx11threadserialization)\.){{0,1}}(linux|macos)(gcc|clang)(release|debug)$"
+        regex_string = rf"({binary_name})((\.(?P<mode>{'|'.join(ALL_MODES)}))?(\.(?P<os>{'|'.join(ALL_OS)})(?P<compiler>{'|'.join(ALL_COMPILERS)})(?P<release>{'|'.join(ALL_RELEASES)})))?$"
         return re.compile(regex_string)
 
     def get_search_paths(self):
