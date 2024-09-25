@@ -119,7 +119,9 @@ class RosettaBinary:
         compiler = match.group("compiler")
         release = match.group("release")
 
-        return cls(dirname=dirname, binary_name=binary_name, mode=mode, os=os_name, compiler=compiler, release=release)
+        return cls(
+            dirname=dirname, binary_name=binary_name, mode=mode, os=os_name, compiler=compiler, release=release  # type: ignore
+        )
 
 
 class RosettaFinder:

@@ -27,6 +27,10 @@ dynamic = ["version"]
 spark = [
     "pyspark>=3.0.0"
 ]
+wrapper = [
+    "joblib",
+    "absl-py"
+]
 test = [
     "bandit[toml]==1.7.5",
     "black==24.8.0",
@@ -48,9 +52,9 @@ test = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/microsoft/python-package-template/tree/main#readme"
-Source = "https://github.com/microsoft/python-package-template"
-Tracker = "https://github.com/microsoft/python-package-template/issues"
+Documentation = "https://github.com/YaoYinYing/rosetta_finder/tree/main#readme"
+Source = "https://github.com/YaoYinYing/rosetta_finder"
+Tracker = "https://github.com/YaoYinYing/rosetta_finder/issues"
 
 
 [project.scripts]
