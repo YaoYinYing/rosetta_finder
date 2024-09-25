@@ -17,6 +17,12 @@ from .rosetta_finder import RosettaBinary, RosettaFinder
 class MPI_IncompatibleInputWarning(RuntimeWarning): ...
 
 
+class RosettaScriptVariableWarning(RuntimeWarning): ...
+
+
+class RosettaScriptVariableNotExistWarning(RosettaScriptVariableWarning): ...
+
+
 @dataclass(frozen=True)
 class RosettaScriptsVariable:
     k: str
@@ -42,6 +48,10 @@ class RosettaScriptVariables:
     def aslonglist(self) -> List[str]:
         return [i for v in self.variables for i in v.aslist]
 
+    @property
+    def asdict(self) -> Dict[str, str]:
+        return {rsv.k: rsv.v for rsv in self.variables}
+
     @classmethod
     def from_dict(cls, var_pair: Dict[str, str]) -> "RosettaScriptVariables":
         variables = [RosettaScriptsVariable(k=k, v=str(v)) for k, v in var_pair.items()]
@@ -49,6 +59,16 @@ class RosettaScriptVariables:
         if instance.empty:
             raise ValueError()
         return instance
+
+    def apply_to_xml_content(self, xml_content: str):
+        xml_content_copy = copy.deepcopy(xml_content)
+        for k, v in self.asdict:
+            if f"%%{k}%%" not in xml_content_copy:
+                warnings.warn(RosettaScriptVariableNotExistWarning(f"Variable {k} not in Rosetta Script content."))
+                continue
+            xml_content_copy = xml_content_copy.replace(f"%%{k}%%", v)
+
+        return xml_content_copy
 
 
 @contextlib.contextmanager
@@ -152,6 +172,33 @@ class Rosetta:
     use_mpi: bool = False
     mpi_node: Optional[MPI_node] = None
 
+    job_id: str = "default"
+    output_dir: str = ""
+
+    @staticmethod
+    def expand_input_dict(d: Dict[str, str]) -> List[str]:
+
+        l = []
+        for sub_l in list(d.items()):
+            l.extend(list(sub_l))
+        return l
+
+    @property
+    def output_pdb_dir(self) -> str:
+        if not self.output_dir:
+            raise ValueError("Output directory not set.")
+        p = os.path.join(self.output_dir, self.job_id, "pdb")
+        os.makedirs(p, exist_ok=True)
+        return p
+
+    @property
+    def output_scorefile_dir(self) -> str:
+        if not self.output_dir:
+            raise ValueError("Output directory not set.")
+        p = os.path.join(self.output_dir, self.job_id, "scorefile")
+        os.makedirs(p, exist_ok=True)
+        return p
+
     def __post_init__(self):
         if self.flags is None:
             self.flags = []
@@ -215,16 +262,16 @@ class Rosetta:
             cmd_jobs = [copy.copy(cmd) + ["-suffix", f"_{i:05}", "-no_nstruct_label"] for i in range(1, nstruct + 1)]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands on {nstruct} decoys."))
         elif inputs:
-            cmd_jobs = [copy.copy(cmd) + [k, str(v)] for input_arg in inputs for k, v in input_arg.items()]
+            cmd_jobs = [copy.copy(cmd) + self.expand_input_dict(input_arg) for input_arg in inputs]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands"))
         else:
             cmd_jobs = [copy.copy(cmd)]
 
             warnings.warn(UserWarning("No inputs are given. Running single job."))
 
-        ret: List = Parallel(n_jobs=self.nproc, return_as="list")(delayed(self.execute)(cmd_job) for cmd_job in cmd_jobs)  # type: ignore
+        ret: List = Parallel(n_jobs=self.nproc)(delayed(self.execute)(cmd_job) for cmd_job in cmd_jobs)  # type: ignore
         # warnings.warn(UserWarning(str(ret)))
-        return ret
+        return list(ret)
 
     def run(self, inputs: Optional[List[Dict[str, str]]] = None, nstruct: Optional[int] = None) -> List[None]:
         cmd = self.compose(opts=self.opts)
@@ -249,5 +296,8 @@ class Rosetta:
 
         if self.opts:
             cmd.extend(self.opts)
+
+        if self.output_dir:
+            cmd.extend(["-out:path:pdb", self.output_pdb_dir, "-out:path:score", self.output_scorefile_dir])
 
         return cmd
