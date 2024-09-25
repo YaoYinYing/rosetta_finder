@@ -11,6 +11,7 @@ on:
 jobs:
   validation:
     strategy:
+      fail-fast: false
       matrix:
         python:
           - "3.7"
@@ -26,6 +27,9 @@ jobs:
       python-version: ${{ matrix.python }}
 
   publish:
+    strategy:
+      fail-fast: false
+
     uses: microsoft/action-python/.github/workflows/publish.yml@0.7.3
     secrets:
       PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
