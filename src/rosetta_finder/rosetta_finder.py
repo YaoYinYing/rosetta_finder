@@ -35,10 +35,23 @@ class RosettaBinary:
 
     dirname: str
     binary_name: str
-    mode: Optional[Literal["static", "mpi", "default", "cxx11threadserialization"]]
-    os: Literal["linux", "macos"]
-    compiler: Literal["gcc", "clang"]
-    release: Literal["release", "debug"]
+    mode: Optional[Literal["static", "mpi", "default", "cxx11threadserialization", None]] = None
+    os: Optional[Literal["linux", "macos", None]] = None
+    compiler: Optional[Literal["gcc", "clang", None]] = None
+    release: Optional[Literal["release", "debug", None]] = None
+
+    _regex_subfix = rf"""
+            (
+                (
+                    \.(?P<mode>{'|'.join(ALL_MODES)})
+                )?
+                (
+                    \.(?P<os>{'|'.join(ALL_OS)})
+                    (?P<compiler>{'|'.join(ALL_COMPILERS)})
+                    (?P<release>{'|'.join(ALL_RELEASES)})
+                )
+            )?$
+        """
 
     @property
     def filename(self) -> str:
@@ -83,7 +96,17 @@ class RosettaBinary:
         """
         # Regular expression to parse the filenam
         regex = rf"""
-            (?P<binary_name>[\w]+)((\.(?P<mode>{'|'.join(ALL_MODES)}))?(\.(?P<os>{'|'.join(ALL_OS)})(?P<compiler>{'|'.join(ALL_COMPILERS)})(?P<release>{'|'.join(ALL_RELEASES)})))?$
+            (?P<binary_name>[\w]+)
+            (
+                (
+                    \.(?P<mode>{'|'.join(ALL_MODES)})
+                )?
+                (
+                    \.(?P<os>{'|'.join(ALL_OS)})
+                    (?P<compiler>{'|'.join(ALL_COMPILERS)})
+                    (?P<release>{'|'.join(ALL_RELEASES)})
+                )
+            )?$
         """
         pattern = re.compile(regex, re.VERBOSE)
         match = pattern.match(filename)
@@ -122,7 +145,7 @@ class RosettaFinder:
             raise OSError("Unsupported OS. This script only runs on Linux or macOS.")
 
         # Determine the search paths
-        self.search_paths = self.get_search_paths()
+        self.search_paths: list[Path] = self.get_search_paths()
 
     def build_regex_pattern(self, binary_name):
         """

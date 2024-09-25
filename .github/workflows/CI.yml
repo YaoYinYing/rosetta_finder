@@ -10,9 +10,20 @@ on:
 
 jobs:
   validation:
+    strategy:
+      matrix:
+        python:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
     uses: microsoft/action-python/.github/workflows/validation.yml@0.7.3
     with:
       workdir: '.'
+      python-version: ${{ matrix.python }}
 
   publish:
     uses: microsoft/action-python/.github/workflows/publish.yml@0.7.3
