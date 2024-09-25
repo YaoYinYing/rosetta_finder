@@ -1,150 +1,118 @@
-import unittest
-import subprocess
 import os
-import sys
-import tempfile
 import shutil
+import subprocess
+import tempfile
 from unittest.mock import patch
 
+import pytest
 
-class TestWhichRosetta(unittest.TestCase):
-
-    def test_integration_whichrosetta_success(self):
-        # Create a temporary directory to act as ROSETTA_BIN
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create a mock binary file
-            binary_name = "rosetta_scripts.linuxgccrelease"
-            binary_path = os.path.join(temp_dir, binary_name)
-            with open(binary_path, "w") as f:
-                f.write("# Mock Rosetta binary")
-
-            # Set the ROSETTA_BIN environment variable to the temp directory
-            env = os.environ.copy()
-            env["ROSETTA_BIN"] = temp_dir
-
-            # Patch sys.platform to 'linux'
-            with patch("sys.platform", "linux"):
-                # Invoke the whichrosetta command
-                result = subprocess.run(
-                    ["whichrosetta", "rosetta_scripts"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env=env,
-                )
-
-                # Check that the command was successful
-                self.assertEqual(result.returncode, 0)
-                expected_output = f"{binary_path}\n"
-                self.assertEqual(result.stdout, expected_output)
-                self.assertEqual(result.stderr, "")
-        finally:
-            # Clean up the temporary directory
-            shutil.rmtree(temp_dir)
-
-    def test_dockerized_whichrosetta_success(self):
-        # Create a temporary directory to act as ROSETTA_BIN
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create a mock binary file
-            binary_name = "rosetta_scripts"
-            binary_path = os.path.join(temp_dir, binary_name)
-
-            with open(binary_path, "w") as f:
-                f.write("# Mock Rosetta binary")
-
-            os.chmod(binary_path, 755)
-
-            # Set the ROSETTA_BIN environment variable to the temp directory
-            env = os.environ.copy()
-            env["PATH"] = temp_dir + ":" + env["PATH"]
-
-            for key in os.environ.keys():
-                if "ROSETTA" in key:
-                    del env[key]
-
-            # Patch sys.platform to 'linux'
-            with patch("sys.platform", "linux"):
-                # Invoke the whichrosetta command
-                result = subprocess.run(
-                    ["whichrosetta", "rosetta_scripts"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env=env,
-                )
-
-                # Check that the command was successful
-                print(result.stderr)
-                print(result.stdout)
-                self.assertEqual(result.returncode, 0)
-                expected_output = f"{binary_path}\n"
-                self.assertEqual(result.stdout, expected_output)
-                self.assertEqual(result.stderr, "")
-        finally:
-            # Clean up the temporary directory
-            shutil.rmtree(temp_dir)
-
-    def test_integration_whichrosetta_not_found(self):
-        # Create a temporary directory to act as ROSETTA_BIN
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Set the ROSETTA_BIN environment variable to the temp directory
-            env = os.environ.copy()
-            env["ROSETTA_BIN"] = temp_dir
-
-            # Patch sys.platform to 'linux'
-            with patch("sys.platform", "linux"):
-                # Invoke the whichrosetta command
-                result = subprocess.run(
-                    ["whichrosetta", "rosetta_scripts"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env=env,
-                )
-
-                # Check that the command failed
-                self.assertNotEqual(result.returncode, 0)
-                expected_error = "rosetta_scripts binary not found in the specified paths.\n"
-                self.assertEqual(result.stdout, "")
-                self.assertIn(expected_error, result.stderr)
-        finally:
-            # Clean up the temporary directory
-            shutil.rmtree(temp_dir)
-
-    # def test_whichrosetta_unsupported_os(self):
-    #     # Create a temporary directory to act as ROSETTA_BIN
-    #     temp_dir = tempfile.mkdtemp()
-    #     try:
-    #         # Create a mock binary file
-    #         binary_name = "rosetta_scripts.linuxgccrelease"
-    #         binary_path = os.path.join(temp_dir, binary_name)
-    #         with open(binary_path, "w") as f:
-    #             f.write("# Mock Rosetta binary")
-
-    #         # Set the ROSETTA_BIN environment variable
-    #         env = os.environ.copy()
-    #         env["ROSETTA_BIN"] = temp_dir
-
-    #         # Patch sys.platform to 'win32'
-    #         with patch("sys.platform", "win32"):
-    #             # Invoke the whichrosetta command
-    #             result = subprocess.run(
-    #                 ["whichrosetta", "rosetta_scripts"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
-    #             )
-
-    #             # Check that the command failed due to unsupported OS
-    #             self.assertNotEqual(result.returncode, 0)
-    #             expected_error = "Unsupported OS. This script only runs on Linux or macOS.\n"
-    #             self.assertEqual(result.stdout, "")
-    #             self.assertIn(expected_error, result.stderr)
-
-    #     finally:
-    #         # Clean up the temporary directory
-    #         shutil.rmtree(temp_dir)
+# Assuming 'whichrosetta' is an installed command available in the PATH.
+# If not, you need to adjust the PATH or ensure the command is available during testing.
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.integration
+def test_integration_whichrosetta_success(tmp_path, monkeypatch):
+    """
+    Test that 'whichrosetta' successfully finds the Rosetta binary when it exists.
+    """
+    # Create a temporary directory to act as ROSETTA_BIN
+    temp_dir = tmp_path
+
+    # Create a mock binary file
+    binary_name = "rosetta_scripts.linuxgccrelease"
+    binary_path = temp_dir / binary_name
+    binary_path.write_text("# Mock Rosetta binary")
+
+    # Set the ROSETTA_BIN environment variable to the temp directory
+    monkeypatch.setenv("ROSETTA_BIN", str(temp_dir))
+
+    # Patch sys.platform to 'linux'
+    with patch("sys.platform", "linux"):
+        # Invoke the whichrosetta command
+        result = subprocess.run(
+            ["whichrosetta", "rosetta_scripts"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=os.environ.copy(),  # Use the modified environment
+        )
+
+        # Check that the command was successful
+        assert result.returncode == 0
+        expected_output = f"{binary_path}\n"
+        assert result.stdout == expected_output
+        assert result.stderr == ""
+
+
+@pytest.mark.integration
+def test_dockerized_whichrosetta_success(tmp_path, monkeypatch):
+    """
+    Test that 'whichrosetta' successfully finds the Rosetta binary in a dockerized environment.
+    """
+    # Create a temporary directory to act as the directory containing the binary
+    temp_dir = tmp_path
+
+    # Create a mock binary file
+    binary_name = "rosetta_scripts"
+    binary_path = temp_dir / binary_name
+    binary_path.write_text("# Mock Rosetta binary")
+
+    # Make the binary executable
+    os.chmod(str(binary_path), 0o755)
+
+    # Set the PATH environment variable to include the temp directory
+    original_path = os.environ.get("PATH", "")
+    monkeypatch.setenv("PATH", f"{temp_dir}{os.pathsep}{original_path}")
+
+    # Remove any ROSETTA-related environment variables
+    for key in list(os.environ.keys()):
+        if "ROSETTA" in key:
+            monkeypatch.delenv(key, raising=False)
+
+    # Patch sys.platform to 'linux'
+    with patch("sys.platform", "linux"):
+        # Invoke the whichrosetta command
+        result = subprocess.run(
+            ["whichrosetta", "rosetta_scripts"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=os.environ.copy(),
+        )
+
+        # Check that the command was successful
+        print(result.stderr)
+        print(result.stdout)
+        assert result.returncode == 0
+        expected_output = f"{binary_path}\n"
+        assert result.stdout == expected_output
+        assert result.stderr == ""
+
+
+@pytest.mark.integration
+def test_integration_whichrosetta_not_found(tmp_path, monkeypatch):
+    """
+    Test that 'whichrosetta' correctly reports when the Rosetta binary is not found.
+    """
+    # Create a temporary directory to act as ROSETTA_BIN
+    temp_dir = tmp_path
+
+    # Set the ROSETTA_BIN environment variable to the temp directory
+    monkeypatch.setenv("ROSETTA_BIN", str(temp_dir))
+
+    # Patch sys.platform to 'linux'
+    with patch("sys.platform", "linux"):
+        # Invoke the whichrosetta command
+        result = subprocess.run(
+            ["whichrosetta", "rosetta_scripts"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=os.environ.copy(),
+        )
+
+        # Check that the command failed
+        assert result.returncode != 0
+        expected_error = "rosetta_scripts binary not found in the specified paths.\n"
+        assert result.stdout == ""
+        assert expected_error in result.stderr

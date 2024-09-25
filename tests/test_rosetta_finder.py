@@ -1,75 +1,68 @@
-#   ---------------------------------------------------------------------------------
-#   Copyright (c) Microsoft Corporation. All rights reserved.
-#   Licensed under the MIT License. See LICENSE in project root for information.
-#   ---------------------------------------------------------------------------------
-"""This is a sample python file for testing functions from the source code."""
 from __future__ import annotations
+import os
+import shutil
+import tempfile
+from unittest.mock import patch, MagicMock
+
+import pytest
 
 from rosetta_finder import RosettaFinder, RosettaBinary
 
-import unittest
-from unittest.mock import patch, MagicMock
-import os
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional, Literal
+
+# Test RosettaBinary.from_filename with valid filenames
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "rosetta_scripts.linuxgccrelease",
+        "rosetta_scripts.mpi.macosclangdebug",
+        "rosetta_scripts.static.linuxgccrelease",
+        "rosetta_scripts.default.macosclangdebug",
+        "rosetta_scripts.cxx11threadserialization.linuxgccrelease",  # Docker serial
+        "rosetta_scripts",  # Docker serial
+    ],
+)
+def test_rosetta_binary_from_filename_valid(filename):
+    dirname = "/path/to/rosetta/bin"
+    rosetta_binary = RosettaBinary.from_filename(dirname, filename)
+    assert rosetta_binary.dirname == dirname
+    assert rosetta_binary.binary_name == "rosetta_scripts"
+    assert rosetta_binary.mode in [None, "mpi", "static", "default", "cxx11threadserialization"]
+    assert rosetta_binary.os in [None, "linux", "macos"]
+    assert rosetta_binary.compiler in [None, "gcc", "clang"]
+    assert rosetta_binary.release in [None, "release", "debug"]
+    # Test filename property
+    assert rosetta_binary.filename == filename
+    # Test full_path property
+    expected_full_path = os.path.join(dirname, filename)
+    assert rosetta_binary.full_path == expected_full_path
 
 
-class TestRosettaBinary(unittest.TestCase):
-    def test_from_filename_valid(self):
-        dirname = "/path/to/rosetta/bin"
-
-        valid_filenames = [
-            "rosetta_scripts.linuxgccrelease",
-            "rosetta_scripts.mpi.macosclangdebug",
-            "rosetta_scripts.static.linuxgccrelease",
-            "rosetta_scripts.default.macosclangdebug",
-            "rosetta_scripts.cxx11threadserialization.linuxgccrelease",  # Docker serial
-            "rosetta_scripts",  # Docker serial
-        ]
-
-        for filename in valid_filenames:
-            with self.subTest(filename=filename):
-                rosetta_binary = RosettaBinary.from_filename(dirname, filename)
-                self.assertEqual(rosetta_binary.dirname, dirname)
-                self.assertEqual(rosetta_binary.binary_name, "rosetta_scripts")
-                self.assertIn(rosetta_binary.mode, [None, "mpi", "static", "default", "cxx11threadserialization"])
-                self.assertIn(rosetta_binary.os, [None, "linux", "macos"])
-                self.assertIn(rosetta_binary.compiler, [None, "gcc", "clang"])
-                self.assertIn(rosetta_binary.release, [None, "release", "debug"])
-                # Test filename property
-                self.assertEqual(rosetta_binary.filename, filename)
-                # Test full_path property
-                expected_full_path = os.path.join(dirname, filename)
-                self.assertEqual(rosetta_binary.full_path, expected_full_path)
-
-    def test_from_filename_invalid(self):
-        dirname = "/path/to/rosetta/bin"
-
-        invalid_filenames = [
-            "rosetta_scripts.windowsgccrelease",  # Invalid OS
-            "rosetta_scripts.linuxgcc",  # Missing release
-            "rosetta_scripts.mpi.linuxgccbeta",  # Invalid release
-            "rosetta_scripts.linuxgccrelease.exe",  # Extra extension
-            "rosetta_scripts.cxx11threadserialization..linuxgccrelease",  # Typo
-            "rosetta_scripts.",  # Ending dot
-            "/rosetta_scripts",  # Leading slash
-        ]
-
-        for filename in invalid_filenames:
-            with self.subTest(filename=filename):
-                with self.assertRaises(ValueError):
-                    RosettaBinary.from_filename(dirname, filename)
+# Test RosettaBinary.from_filename with invalid filenames
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "rosetta_scripts.windowsgccrelease",  # Invalid OS
+        "rosetta_scripts.linuxgcc",  # Missing release
+        "rosetta_scripts.mpi.linuxgccbeta",  # Invalid release
+        "rosetta_scripts.linuxgccrelease.exe",  # Extra extension
+        "rosetta_scripts.cxx11threadserialization..linuxgccrelease",  # Typo
+        "rosetta_scripts.",  # Ending dot
+        "/rosetta_scripts",  # Leading slash
+    ],
+)
+def test_rosetta_binary_from_filename_invalid(filename):
+    dirname = "/path/to/rosetta/bin"
+    with pytest.raises(ValueError):
+        RosettaBinary.from_filename(dirname, filename)
 
 
-class TestRosettaFinder(unittest.TestCase):
-    @patch("os.environ")
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.is_dir")
-    @patch("pathlib.Path.iterdir")
-    def test_find_binary_success(self, mock_iterdir, mock_is_dir, mock_exists, mock_environ):
-        # Set up the mocks
-        mock_environ.get.return_value = "/mock/rosetta/bin"  # Mock ROSETTA_BIN
+# Test RosettaFinder.find_binary when binary is found
+@patch("pathlib.Path.iterdir")
+@patch("pathlib.Path.is_dir")
+@patch("pathlib.Path.exists")
+def test_find_binary_success(mock_exists, mock_is_dir, mock_iterdir):
+    # Set up the mocks
+    with patch.dict("os.environ", {"ROSETTA_BIN": "/mock/rosetta/bin"}):
         mock_exists.return_value = True
         mock_is_dir.return_value = True
 
@@ -83,23 +76,24 @@ class TestRosettaFinder(unittest.TestCase):
         finder = RosettaFinder()
         rosetta_binary = finder.find_binary("rosetta_scripts")
 
-        self.assertIsInstance(rosetta_binary, RosettaBinary)
-        self.assertEqual(rosetta_binary.binary_name, "rosetta_scripts")
-        self.assertEqual(rosetta_binary.mode, None)
-        self.assertEqual(rosetta_binary.os, "linux")
-        self.assertEqual(rosetta_binary.compiler, "gcc")
-        self.assertEqual(rosetta_binary.release, "release")
-        self.assertEqual(rosetta_binary.dirname, "/mock/rosetta/bin")
+        assert isinstance(rosetta_binary, RosettaBinary)
+        assert rosetta_binary.binary_name == "rosetta_scripts"
+        assert rosetta_binary.mode is None
+        assert rosetta_binary.os == "linux"
+        assert rosetta_binary.compiler == "gcc"
+        assert rosetta_binary.release == "release"
+        assert rosetta_binary.dirname == "/mock/rosetta/bin"
         expected_full_path = "/mock/rosetta/bin/rosetta_scripts.linuxgccrelease"
-        self.assertEqual(rosetta_binary.full_path, expected_full_path)
+        assert rosetta_binary.full_path == expected_full_path
 
-    @patch("os.environ")
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.is_dir")
-    @patch("pathlib.Path.iterdir")
-    def test_find_binary_not_found(self, mock_iterdir, mock_is_dir, mock_exists, mock_environ):
-        # Set up the mocks
-        mock_environ.get.return_value = "/mock/rosetta/bin"  # Mock ROSETTA_BIN
+
+# Test RosettaFinder.find_binary when binary is not found
+@patch("pathlib.Path.iterdir")
+@patch("pathlib.Path.is_dir")
+@patch("pathlib.Path.exists")
+def test_find_binary_not_found(mock_exists, mock_is_dir, mock_iterdir):
+    # Set up the mocks
+    with patch.dict("os.environ", {"ROSETTA_BIN": "/mock/rosetta/bin"}):
         mock_exists.return_value = True
         mock_is_dir.return_value = True
 
@@ -107,15 +101,99 @@ class TestRosettaFinder(unittest.TestCase):
         mock_iterdir.return_value = []
 
         finder = RosettaFinder()
-        with self.assertRaises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
             finder.find_binary("rosetta_scripts")
 
-    @patch("sys.platform", "linux")
-    def test_unsupported_os(self):
-        with patch("sys.platform", "win32"):
-            with self.assertRaises(EnvironmentError):
-                RosettaFinder()
+
+# Test RosettaFinder initialization on unsupported OS
+def test_unsupported_os():
+    with patch("sys.platform", "win32"):
+        with pytest.raises(EnvironmentError):
+            RosettaFinder()
 
 
-if __name__ == "__main__":
-    unittest.main()
+# Integration tests
+
+
+@pytest.fixture
+def temp_dir():
+    # Create a temporary directory
+    dirpath = tempfile.mkdtemp()
+    yield dirpath
+    # Clean up after test
+    shutil.rmtree(dirpath)
+
+
+@pytest.mark.integration
+def test_integration_find_binary(temp_dir):
+    # Create files in the temporary directory
+    valid_filenames = [
+        "rosetta_scripts.linuxgccrelease",
+        "rosetta_scripts.mpi.linuxgccdebug",
+        "rosetta_scripts.static.macosclangrelease",
+        "rosetta_scripts.default.macosclangdebug",
+    ]
+
+    invalid_filenames = [
+        "rosetta_scripts.windowsgccrelease",  # Invalid OS
+        "rosetta_scripts.linuxgcc",  # Missing release
+        "random_file.txt",  # Non-matching file
+        "rosetta_scripts.linuxgccbeta",  # Invalid release
+        "rosetta_scripts.linuxgccrelease.exe",  # Extra extension
+    ]
+
+    # Create valid binary files
+    for filename in valid_filenames:
+        file_path = os.path.join(temp_dir, filename)
+        with open(file_path, "w") as f:
+            f.write("")  # Create an empty file
+
+    # Create invalid files
+    for filename in invalid_filenames:
+        file_path = os.path.join(temp_dir, filename)
+        with open(file_path, "w") as f:
+            f.write("")  # Create an empty file
+
+    # Instantiate RosettaFinder with the temporary directory
+    finder = RosettaFinder(search_path=temp_dir)
+
+    # Search for 'rosetta_scripts' binary
+    rosetta_binary = finder.find_binary("rosetta_scripts")
+
+    # Verify that the returned binary is one of the valid ones
+    assert isinstance(rosetta_binary, RosettaBinary)
+    assert rosetta_binary.binary_name == "rosetta_scripts"
+    assert rosetta_binary.filename in valid_filenames
+
+    # Print the outputs
+    print(f"Found binary: {rosetta_binary.full_path}")
+    print(f"Binary Name: {rosetta_binary.binary_name}")
+    print(f"Mode: {rosetta_binary.mode}")
+    print(f"OS: {rosetta_binary.os}")
+    print(f"Compiler: {rosetta_binary.compiler}")
+    print(f"Release: {rosetta_binary.release}")
+
+
+@pytest.mark.integration
+def test_integration_no_binary_found(temp_dir):
+    # Create invalid files only
+    invalid_filenames = [
+        "rosetta_scripts.windowsgccrelease",  # Invalid OS
+        "rosetta_scripts.linuxgcc",  # Missing release
+        "random_file.txt",  # Non-matching file
+        "rosetta_scripts.linuxgccbeta",  # Invalid release
+        "rosetta_scripts.linuxgccrelease.exe",  # Extra extension
+    ]
+
+    # Create invalid files
+    for filename in invalid_filenames:
+        file_path = os.path.join(temp_dir, filename)
+        with open(file_path, "w") as f:
+            f.write("")  # Create an empty file
+
+    # Instantiate RosettaFinder with the temporary directory
+    finder = RosettaFinder(search_path=temp_dir)
+
+    # Attempt to find 'rosetta_scripts' binary, expect FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        finder.find_binary("rosetta_scripts.linuxgccrelease")
