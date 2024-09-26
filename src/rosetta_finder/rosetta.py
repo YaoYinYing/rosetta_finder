@@ -333,6 +333,8 @@ class RosettaEnergyUnitAnalyser:
     score_file: str
     score_term: str = "total_score"
 
+    job_id: Optional[str] = None
+
     @staticmethod
     def scorefile2df(score_file: str) -> pd.DataFrame:
         df = pd.read_fwf(score_file, skiprows=1)
