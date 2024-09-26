@@ -364,14 +364,13 @@ class RosettaEnergyUnitAnalyser:
             raise ValueError(f'Score term "{self.score_term}" not found in score file.')
 
     @property
-    def best_decoy(self) -> Dict[str, Union[str, float, int]]:
+    def best_decoy(self) -> Dict[str, Union[str, float]]:
         if self.df.empty:
             return {}
         min_idx = self.df[self.score_term].idxmin()
         min_record = self.df[self.df.index == min_idx]
 
         return {
-            "idx": min_idx,
             "score": float(min_record[self.score_term].iloc[0]),
             "decoy": str(min_record["description"].iloc[0]),
         }

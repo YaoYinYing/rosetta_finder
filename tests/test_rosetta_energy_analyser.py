@@ -6,8 +6,8 @@ from rosetta_finder import RosettaEnergyUnitAnalyser  # Replace with the actual 
 
 
 sample_score_file = "tests/data/score.sc"
-best_decoy = {"idx": 2, "score": -388.465, "decoy": "3fap_hf3_A_0003"}
-best_decoy_cat = {"idx": 5, "score": -788.235, "decoy": "3fap_hf3_A_0006"}
+best_decoy = {"score": -388.465, "decoy": "3fap_hf3_A_0003"}
+best_decoy_cat = {"score": -788.235, "decoy": "3fap_hf3_A_0006"}
 
 # Test a non-existing score file
 
