@@ -10,6 +10,7 @@ In VSCode, Code Coverage is recorded in config.xml. Delete this file to reset re
 
 from __future__ import annotations
 
+import os
 from typing import List
 import warnings
 
@@ -41,3 +42,7 @@ def no_rosetta():
     has_rosetta_installed = "rosetta_scripts" in result.stdout
     warnings.warn(UserWarning(f"Rosetta Installed: {has_rosetta_installed} - {result.stdout}"))
     return not has_rosetta_installed
+
+
+def github_rosetta_test():
+    return os.environ.get("GITHUB_ROSETTA_TEST", "NO") == "YES"

@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from rosetta_finder import RosettaFinder, RosettaBinary
+from tests.conftest import github_rosetta_test
 
 
 # Test RosettaBinary.from_filename with valid filenames
@@ -175,6 +176,7 @@ def test_integration_find_binary(temp_dir):
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_integration_no_binary_found(temp_dir):
     # Create invalid files only
     invalid_filenames = [

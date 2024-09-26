@@ -6,11 +6,14 @@ from unittest.mock import patch
 
 import pytest
 
+from .conftest import github_rosetta_test
+
 # Assuming 'whichrosetta' is an installed command available in the PATH.
 # If not, you need to adjust the PATH or ensure the command is available during testing.
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_integration_whichrosetta_success(tmp_path, monkeypatch):
     """
     Test that 'whichrosetta' successfully finds the Rosetta binary when it exists.
@@ -45,6 +48,7 @@ def test_integration_whichrosetta_success(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_dockerized_whichrosetta_success(tmp_path, monkeypatch):
     """
     Test that 'whichrosetta' successfully finds the Rosetta binary in a dockerized environment.
@@ -90,6 +94,7 @@ def test_dockerized_whichrosetta_success(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_integration_whichrosetta_not_found(tmp_path, monkeypatch):
     """
     Test that 'whichrosetta' correctly reports when the Rosetta binary is not found.
