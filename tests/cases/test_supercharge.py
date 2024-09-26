@@ -5,17 +5,7 @@ import pytest
 import shutil
 import warnings
 
-
-def no_rosetta():
-    import subprocess
-
-    result = subprocess.run(
-        ["whichrosetta", "rosetta_scripts"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
-    # Check that the command was successful
-    has_rosetta_installed = "rosetta_scripts" in result.stdout
-    warnings.warn(UserWarning(f"Rosetta Installed: {has_rosetta_installed} - {result.stdout}"))
-    return not has_rosetta_installed
+from ..conftest import no_rosetta
 
 
 @pytest.mark.integration

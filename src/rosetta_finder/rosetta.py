@@ -262,27 +262,34 @@ class Rosetta:
     def run_mpi(
         self,
         cmd: List[str],
+        inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
         nstruct: Optional[int] = None,
     ) -> List[None]:
         """
         Runs a command using MPI.
 
         :param cmd: Base command to be executed.
+        :param inputs: List of input dictionaries.
         :param nstruct: Number of structures to generate.
         :return: List of Nones for counting.
         """
         assert isinstance(self.mpi_node, MPI_node), "MPI node instance is not initialized."
 
+        _cmd = copy.copy(cmd)
+        if inputs:
+            for i, _i in enumerate(inputs):
+                _cmd.extend(self.expand_input_dict(_i))
+
         if nstruct:
-            ret = cmd.extend(["-nstruct", str(nstruct)])
-        with self.mpi_node.apply(cmd) as updated_cmd:
+            ret = _cmd.extend(["-nstruct", str(nstruct)])
+        with self.mpi_node.apply(_cmd) as updated_cmd:
             ret = self.execute(updated_cmd)
 
         return [ret]
 
     def run_local(
         self,
-        cmd,
+        cmd: List[str],
         inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
         nstruct: Optional[int] = None,
     ) -> List[None]:
@@ -301,15 +308,13 @@ class Rosetta:
         if nstruct and nstruct > 0:
 
             if inputs:
-                assert len(inputs) == 1, "For runs with nstruct, use one dictionary in input list"
-                input_args = self.expand_input_dict(inputs[0])
-                print(f"Additional input args is passed: {input_args}")
-            else:
-                input_args = []
+                for i, _i in enumerate(inputs):
+                    __i = self.expand_input_dict(_i)
+                    _cmd.extend(__i)
+                    print(f"Additional input args is passed: {__i}")
 
             cmd_jobs = [
                 _cmd
-                + input_args
                 + ["-suffix", f"_{i:05}", "-no_nstruct_label", "-out:file:scorefile", f"{self.job_id}.score.{i:05}.sc"]
                 for i in range(1, nstruct + 1)
             ]
@@ -343,8 +348,12 @@ class Rosetta:
         cmd = self.compose(opts=self.opts)
         if self.use_mpi and isinstance(self.mpi_node, MPI_node):
             if inputs is not None:
-                warnings.warn(MPI_IncompatibleInputWarning("Ignore Customized Input for MPI nodes."))
-            return self.run_mpi(cmd, nstruct)
+                warnings.warn(
+                    MPI_IncompatibleInputWarning(
+                        "Customized Inputs for MPI nodes will be flattened and passed to master node"
+                    )
+                )
+            return self.run_mpi(cmd, inputs=inputs, nstruct=nstruct)
 
         return self.run_local(cmd, inputs, nstruct)
 

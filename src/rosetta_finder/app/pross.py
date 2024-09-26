@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 from dataclasses import dataclass
-from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser
+from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
 from rosetta_finder.utils import timing
 from rosetta_finder.app.utils import PDBProcessor
 
@@ -55,6 +55,7 @@ class PROSS:
             output_dir=refinement_dir,
             save_all_together=False,
             job_id="pross_refinement",
+            mpi_node=MPI_node(nproc=32),
         )
 
         with timing("PROSS: Refinement"):
@@ -121,8 +122,9 @@ class PROSS:
             rosetta.run(inputs=[{"-parser:script_vars": f"current_res={i}"} for i in range(1, self.seq_len + 1)])
 
         # merge resfiles
+        merged_filters = self.merge_resfiles(self.filterscan_dir, self.seq_len)
 
-        return self.merge_resfiles(self.filterscan_dir, self.seq_len)
+        return [os.path.basename(f) for f in merged_filters]
 
     def merge_resfiles(self, filterscan_res_dir: str, seq_length: int) -> List[str]:
         """

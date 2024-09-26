@@ -290,4 +290,7 @@ def test_rosetta_mpi_incompatible_input_warning(mock_which, mock_popen, temp_dir
     with pytest.warns(MPI_IncompatibleInputWarning) as record:
         rosetta.run(inputs=[{"-in:file:s": "input1.pdb"}, {"-in:file:s": "input2.pdb"}])
 
-    assert any("Ignore Customized Input for MPI nodes" in str(warning.message) for warning in record)
+    assert any(
+        "Customized Inputs for MPI nodes will be flattened and passed to master node" in str(warning.message)
+        for warning in record
+    )

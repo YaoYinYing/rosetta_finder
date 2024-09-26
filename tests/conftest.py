@@ -11,6 +11,7 @@ In VSCode, Code Coverage is recorded in config.xml. Delete this file to reset re
 from __future__ import annotations
 
 from typing import List
+import warnings
 
 import pytest
 from _pytest.nodes import Item
@@ -28,3 +29,15 @@ def pytest_collection_modifyitems(items: list[Item]):
 def unit_test_mocks(monkeypatch: None):
     """Include Mocks here to execute all commands offline and fast."""
     pass
+
+
+def no_rosetta():
+    import subprocess
+
+    result = subprocess.run(
+        ["whichrosetta", "rosetta_scripts"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    # Check that the command was successful
+    has_rosetta_installed = "rosetta_scripts" in result.stdout
+    warnings.warn(UserWarning(f"Rosetta Installed: {has_rosetta_installed} - {result.stdout}"))
+    return not has_rosetta_installed
