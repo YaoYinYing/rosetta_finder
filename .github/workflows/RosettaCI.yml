@@ -55,7 +55,7 @@ jobs:
 
       - name: Setup rosetta_finder on ${{ matrix.os }} - py${{ matrix.python-version }}
         run: |
-          pip install 'rosetta_finder[test,wrapper]' -U
+          pip install '.[test,wrapper]' -U
 
       - name: Run test cases
         run: |
