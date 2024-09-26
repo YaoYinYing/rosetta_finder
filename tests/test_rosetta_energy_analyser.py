@@ -15,11 +15,10 @@ top3_total_score = (
     {"score": -388.465, "decoy": "3fap_hf3_A_0003"},
 )
 top3_fa_atr = (
-    {"score": -607.567, "decoy": "3fap_hf3_A_0006"},
-    {"score": -595.567, "decoy": "3fap_hf3_A_0002"},
-    {"score": -575.567, "decoy": "3fap_hf3_A_0005"},
+    {"score": -675.517, "decoy": "3fap_hf3_A_0001"},
+    {"score": -607.507, "decoy": "3fap_hf3_A_0006"},
+    {"score": -595.527, "decoy": "3fap_hf3_A_0002"},
 )
-
 # Test a non-existing score file
 
 

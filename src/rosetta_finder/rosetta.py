@@ -2,7 +2,7 @@ import copy
 from dataclasses import dataclass, field
 import shutil
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 import subprocess
 import os
 import random
@@ -170,6 +170,12 @@ class Rosetta:
 
     @staticmethod
     def expand_input_dict(d: Dict[str, Union[str, RosettaScriptsVariableGroup]]) -> List[str]:
+        """
+        Expands a dictionary containing strings and variable groups into a flat list.
+
+        :param d: Dictionary with keys and values that can be either strings or variable groups.
+        :return: A list of expanded key-value pairs.
+        """
 
         l = []
         for k, v in d.items():
@@ -181,6 +187,11 @@ class Rosetta:
 
     @property
     def output_pdb_dir(self) -> str:
+        """
+        Returns the path to the PDB output directory, creating it if necessary.
+
+        :return: Path to the PDB output directory.
+        """
         if not self.output_dir:
             raise ValueError("Output directory not set.")
         p = os.path.join(self.output_dir, self.job_id, "pdb" if not self.save_all_together else "all")
@@ -189,6 +200,11 @@ class Rosetta:
 
     @property
     def output_scorefile_dir(self) -> str:
+        """
+        Returns the path to the score file output directory, creating it if necessary.
+
+        :return: Path to the score file output directory.
+        """
         if not self.output_dir:
             raise ValueError("Output directory not set.")
         p = os.path.join(self.output_dir, self.job_id, "scorefile" if not self.save_all_together else "all")
@@ -196,6 +212,9 @@ class Rosetta:
         return p
 
     def __post_init__(self):
+        """
+        Post-initialization setup for the Rosetta job configuration.
+        """
         if self.flags is None:
             self.flags = []
         if self.opts is None:
@@ -217,6 +236,11 @@ class Rosetta:
 
     @staticmethod
     def execute(cmd: List[str]) -> None:
+        """
+        Executes a command and handles its output and errors.
+
+        :param cmd: Command to be executed.
+        """
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -240,6 +264,13 @@ class Rosetta:
         cmd: List[str],
         nstruct: Optional[int] = None,
     ) -> List[None]:
+        """
+        Runs a command using MPI.
+
+        :param cmd: Base command to be executed.
+        :param nstruct: Number of structures to generate.
+        :return: List of Nones for counting.
+        """
         assert isinstance(self.mpi_node, MPI_node), "MPI node instance is not initialized."
 
         if nstruct:
@@ -255,6 +286,14 @@ class Rosetta:
         inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
         nstruct: Optional[int] = None,
     ) -> List[None]:
+        """
+        Runs a command locally, possibly in parallel.
+
+        :param cmd: Base command to be executed.
+        :param inputs: List of input dictionaries.
+        :param nstruct: Number of structures to generate.
+        :return: List of Nones for counting.
+        """
         from joblib import Parallel, delayed
 
         _cmd = copy.copy(cmd)
@@ -283,7 +322,9 @@ class Rosetta:
 
             warnings.warn(UserWarning("No inputs are given. Running single job."))
 
-        ret: List = Parallel(n_jobs=self.nproc)(delayed(self.execute)(cmd_job) for cmd_job in cmd_jobs)  # type: ignore
+        ret = Parallel(n_jobs=self.nproc, verbose=100)(
+            delayed(self.execute)(cmd_job) for cmd_job in cmd_jobs
+        )  # type: ignore
         # warnings.warn(UserWarning(str(ret)))
         return list(ret)
 
@@ -292,6 +333,13 @@ class Rosetta:
         inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
         nstruct: Optional[int] = None,
     ) -> List[None]:
+        """
+        Runs the command either using MPI or locally based on configuration.
+
+        :param inputs: List of input dictionaries.
+        :param nstruct: Number of structures to generate.
+        :return: List of Nones.
+        """
         cmd = self.compose(opts=self.opts)
         if self.use_mpi and isinstance(self.mpi_node, MPI_node):
             if inputs is not None:
@@ -301,6 +349,11 @@ class Rosetta:
         return self.run_local(cmd, inputs, nstruct)
 
     def compose(self, **kwargs) -> List[str]:
+        """
+        Composes the full command based on the provided options.
+
+        :return: The composed command as a list of strings.
+        """
         assert isinstance(self.bin, RosettaBinary), "Rosetta binary must be a RosettaBinary object"
 
         cmd = [
@@ -330,6 +383,15 @@ class Rosetta:
 
 @dataclass
 class RosettaEnergyUnitAnalyser:
+    """
+    A tool class for analyzing Rosetta energy calculation results.
+
+    Parameters:
+    - score_file (str): The path to the score file or directory containing score files.
+    - score_term (str, optional): The column name in the score file to use as the score. Defaults to "total_score".
+    - job_id (Optional[str], optional): An identifier for the job. Defaults to None.
+    """
+
     score_file: str
     score_term: str = "total_score"
 
@@ -337,6 +399,15 @@ class RosettaEnergyUnitAnalyser:
 
     @staticmethod
     def scorefile2df(score_file: str) -> pd.DataFrame:
+        """
+        Converts a score file into a pandas DataFrame.
+
+        Parameters:
+        - score_file (str): Path to the score file.
+
+        Returns:
+        - pd.DataFrame: DataFrame containing the data from the score file.
+        """
         df = pd.read_fwf(score_file, skiprows=1)
 
         if "SCORE:" in df.columns:
@@ -345,6 +416,9 @@ class RosettaEnergyUnitAnalyser:
         return df
 
     def __post_init__(self):
+        """
+        Initializes the DataFrame based on the provided score file or directory.
+        """
         if os.path.isfile(self.score_file):
             self.df = self.scorefile2df(self.score_file)
         elif os.path.isdir(self.score_file):
@@ -362,8 +436,17 @@ class RosettaEnergyUnitAnalyser:
             raise ValueError(f'Score term "{self.score_term}" not found in score file.')
 
     @staticmethod
-    def df2dict(dfs: pd.DataFrame, k: str = "total_score") -> Tuple[Dict[str, Union[str, float]]]:
+    def df2dict(dfs: pd.DataFrame, k: str = "total_score") -> Tuple[Dict[Literal["score", "decoy"], Union[str, float]]]:
+        """
+        Converts a DataFrame into a tuple of dictionaries with scores and decoys.
 
+        Parameters:
+        - dfs (pd.DataFrame): DataFrame containing the scores.
+        - k (str, optional): Column name to use as the score. Defaults to "total_score".
+
+        Returns:
+        - Tuple[Dict[Literal["score", "decoy"], Union[str, float]]]: Tuple of dictionaries containing scores and decoys.
+        """
         t = tuple(
             {
                 "score": float(dfs[dfs.index == i][k].iloc[0]),
@@ -375,16 +458,34 @@ class RosettaEnergyUnitAnalyser:
         return t  # type: ignore
 
     @property
-    def best_decoy(self) -> Dict[str, Union[str, float]]:
+    def best_decoy(self) -> Dict[Literal["score", "decoy"], Union[str, float]]:
+        """
+        Returns the best decoy based on the score term.
+
+        Returns:
+        - Dict[Literal["score", "decoy"], Union[str, float]]: Dictionary containing the score and decoy of the best entry.
+        """
         if self.df.empty:
             return {}
         return self.top(1)[0]
 
-    def top(self, rank: int = 1, score_term: Optional[str] = None) -> Tuple[Dict[str, Union[str, float]]]:
+    def top(
+        self, rank: int = 1, score_term: Optional[str] = None
+    ) -> Tuple[Dict[Literal["score", "decoy"], Union[str, float]]]:
+        """
+        Returns the top `rank` decoys based on the specified score term.
+
+        Parameters:
+        - rank (int, optional): The number of top entries to return. Defaults to 1.
+        - score_term (Optional[str], optional): The column name to use as the score. Defaults to the class attribute `score_term`.
+
+        Returns:
+        - Tuple[Dict[Literal["score", "decoy"], Union[str, float]]]: Tuple of dictionaries containing scores and decoys of the top entries.
+        """
         if rank <= 0:
             raise ValueError(f"Rank must be greater than 0")
 
-        # override score_term if provided
+        # Override score_term if provided
         score_term = score_term if score_term is not None and score_term in self.df.columns else self.score_term
 
         df = self.df.sort_values(

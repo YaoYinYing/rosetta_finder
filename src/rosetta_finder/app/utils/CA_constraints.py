@@ -30,7 +30,7 @@ class PDBProcessor:
         return ""
 
     @staticmethod
-    def convert_pdb_to_constraints(pdb_file_path: str, output_file_path: str) -> None:
+    def convert_pdb_to_constraints(pdb_file_path: str, output_file_path: str) -> int:
         """
         Static method to convert a PDB file into a list of CoordinateConstraints for CA atoms
         and write them to an output file.
@@ -40,11 +40,14 @@ class PDBProcessor:
             output_file_path (str): The file path to write the CA constraints.
 
         Returns:
-            None: Writes the constraints to the output file.
+            count: Sequence Length
         """
         # Open the PDB file for reading and the output file for writing
         with open(pdb_file_path, "r") as pdb_file, open(output_file_path, "w") as output_file:
+            c = 0
             for line in pdb_file:
                 constraint = PDBProcessor.get_CA_constraint_line(line)
                 if constraint:  # Only write non-empty constraints
                     output_file.write(constraint)
+                    c += 1
+            return c

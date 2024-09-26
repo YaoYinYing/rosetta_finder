@@ -43,7 +43,9 @@ def supercharge(
             "all",
             "-unmute",
             "protocols.design_opt.Supercharge",
+            "-overwrite",
         ],
+        save_all_together=True,
     )
     instance = os.path.basename(pdb)[:-4]
 
