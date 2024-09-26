@@ -8,6 +8,7 @@ A Python utility for finding Rosetta binaries based on a specific naming convent
 ## CI Status
 [![Python CI](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml)
 [![Dependabot Updates](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates)
+[![codecov](https://codecov.io/gh/YaoYinYing/rosetta_finder/branch/main/graph/badge.svg?token=epCTnx8SXj)](https://codecov.io/gh/YaoYinYing/rosetta_finder)
 
 ## Release
 ![GitHub Release](https://img.shields.io/github/v/release/YaoYinYing/rosetta_finder)

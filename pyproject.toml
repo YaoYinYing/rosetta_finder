@@ -29,7 +29,8 @@ spark = [
 ]
 wrapper = [
     "joblib",
-    "absl-py"
+    "absl-py",
+    "pandas"
 ]
 test = [
     "bandit[toml]==1.7.10",

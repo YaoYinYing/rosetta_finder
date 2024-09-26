@@ -8,7 +8,8 @@ import os
 import random
 import contextlib
 import warnings
-import multiprocessing
+
+import pandas as pd
 
 # internal imports
 from .rosetta_finder import RosettaBinary, RosettaFinder
@@ -177,11 +178,14 @@ class Rosetta:
     save_all_together: bool = False
 
     @staticmethod
-    def expand_input_dict(d: Dict[str, str]) -> List[str]:
+    def expand_input_dict(d: Dict[str, Union[str, RosettaScriptsVariableGroup]]) -> List[str]:
 
         l = []
-        for sub_l in list(d.items()):
-            l.extend(list(sub_l))
+        for k, v in d.items():
+            if not isinstance(v, RosettaScriptsVariableGroup):
+                l.extend([k, v])
+            else:
+                l.extend(v.aslonglist)
         return l
 
     @property
@@ -255,18 +259,31 @@ class Rosetta:
         return [ret]
 
     def run_local(
-        self, cmd, inputs: Optional[List[Dict[str, str]]] = None, nstruct: Optional[int] = None
+        self,
+        cmd,
+        inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
+        nstruct: Optional[int] = None,
     ) -> List[None]:
         from joblib import Parallel, delayed
 
+        _cmd = copy.copy(cmd)
+
         if nstruct and nstruct > 0:
-            cmd_jobs = [copy.copy(cmd) + ["-suffix", f"_{i:05}", "-no_nstruct_label"] for i in range(1, nstruct + 1)]
+
+            if inputs:
+                assert len(inputs) == 1, "For runs with nstruct, use one dictionary in input list"
+                input_args = self.expand_input_dict(inputs[0])
+                print(f"Additional input args is passed: {input_args}")
+            else:
+                input_args = []
+
+            cmd_jobs = [_cmd + input_args + ["-suffix", f"_{i:05}", "-no_nstruct_label"] for i in range(1, nstruct + 1)]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands on {nstruct} decoys."))
         elif inputs:
-            cmd_jobs = [copy.copy(cmd) + self.expand_input_dict(input_arg) for input_arg in inputs]
+            cmd_jobs = [_cmd + self.expand_input_dict(input_arg) for input_arg in inputs]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands"))
         else:
-            cmd_jobs = [copy.copy(cmd)]
+            cmd_jobs = [_cmd]
 
             warnings.warn(UserWarning("No inputs are given. Running single job."))
 
@@ -274,7 +291,11 @@ class Rosetta:
         # warnings.warn(UserWarning(str(ret)))
         return list(ret)
 
-    def run(self, inputs: Optional[List[Dict[str, str]]] = None, nstruct: Optional[int] = None) -> List[None]:
+    def run(
+        self,
+        inputs: Optional[List[Dict[str, Union[str, RosettaScriptsVariableGroup]]]] = None,
+        nstruct: Optional[int] = None,
+    ) -> List[None]:
         cmd = self.compose(opts=self.opts)
         if self.use_mpi and isinstance(self.mpi_node, MPI_node):
             if inputs is not None:
@@ -309,3 +330,45 @@ class Rosetta:
             cmd.extend(["-out:path:pdb", self.output_pdb_dir, "-out:path:score", self.output_scorefile_dir])
 
         return cmd
+
+
+@dataclass
+class RosettaEnergyUnitAnalyser:
+    score_file: str
+    score_term: str = "total_score"
+
+    @staticmethod
+    def scorefile2df(score_file: str) -> pd.DataFrame:
+        df = pd.read_fwf(score_file, skiprows=1)
+
+        if "SCORE:" in df.columns:
+            df.drop("SCORE:", axis=1, inplace=True)
+
+        return df
+
+    def __post_init__(self):
+        if os.path.isfile(self.score_file):
+            self.df = self.scorefile2df(self.score_file)
+        elif os.path.isdir(self.score_file):
+            dfs = [
+                self.scorefile2df(os.path.join(self.score_file, f))
+                for f in os.listdir(self.score_file)
+                if f.endswith(".sc")
+            ]
+            warnings.warn(UserWarning(f"Concatenate {len(dfs)} score files"))
+            self.df = pd.concat(dfs, axis=0, ignore_index=True)
+        else:
+            raise FileNotFoundError(f"Score file {self.score_file} not found.")
+
+        if not self.score_term in self.df.columns:
+            raise ValueError(f'Score term "{self.score_term}" not found in score file.')
+
+    @property
+    def best_decoy(self) -> Dict[str, Union[str, float, int]]:
+        if self.df.empty:
+            return {}
+        min_idx = self.df[self.score_term].idxmin()
+        min_score = self.df[self.score_term].min()
+        min_decoy = self.df.iloc[min_idx]["description"]
+
+        return {"idx": min_idx, "score": min_score, "decoy": min_decoy}
