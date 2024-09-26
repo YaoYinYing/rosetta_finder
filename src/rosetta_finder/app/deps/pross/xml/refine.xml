@@ -1,0 +1,73 @@
+<ROSETTASCRIPTS>
+
+	<SCOREFXNS>
+		replace talaris2014 with ref2015
+		<ScoreFunction name="talaris_full" weights="ref2015">
+			<Reweight scoretype="coordinate_constraint" weight="%%cst_value%%"/>
+			<Reweight scoretype="res_type_constraint" weight="0.4"/>
+		</ScoreFunction>
+
+		<ScoreFunction name="soft_rep_full" weights="soft_rep">
+			<Reweight scoretype="coordinate_constraint" weight="%%cst_value%%"/>
+			<Reweight scoretype="res_type_constraint" weight="0.4"/>
+		</ScoreFunction>
+
+		<ScoreFunction name="tal_no_pssm" weights="ref2015">
+			<Reweight scoretype="coordinate_constraint" weight="%%cst_value%%"/>
+		</ScoreFunction>
+
+	 	<ScoreFunction name="talaris_pure" weights="ref2015"/>
+
+	</SCOREFXNS>
+
+	<TASKOPERATIONS>
+        	<InitializeFromCommandline name="init"/>
+		<RestrictToRepacking name="rtr"/>
+ 		<PreventResiduesFromRepacking name="fix_res" reference_pdb_id="%%pdb_reference%%" residues="%%res_to_fix%%"/> #any improtant residues
+	</TASKOPERATIONS>
+
+	<MOVERS>
+        	<PackRotamersMover name="soft_repack" scorefxn="soft_rep_full" task_operations="init,rtr,fix_res"/>
+        	<PackRotamersMover name="hard_repack" scorefxn="talaris_full" task_operations="init,rtr,fix_res"/>
+        	<RotamerTrialsMinMover name="RTmin" scorefxn="talaris_full" task_operations="init,rtr,fix_res"/>
+        	<MinMover name="soft_min" scorefxn="soft_rep_full" chi="1" bb="1" jump="0"/>
+        	<MinMover name="hard_min" scorefxn="talaris_full" chi="1" bb="1" jump="0"/>
+        	<ConstraintSetMover name="add_CA_cst" cst_file="%%cst_full_path%%"/>
+
+        	<ParsedProtocol name="refinement_block"> #10 movers
+			<Add mover_name="soft_repack"/>
+			<Add mover_name="soft_min"/>
+			<Add mover_name="soft_repack"/>
+			<Add mover_name="hard_min"/>
+			<Add mover_name="hard_repack"/>
+			<Add mover_name="hard_min"/>
+              		<Add mover_name="hard_repack"/>
+                	<Add mover_name="RTmin"/>
+                	<Add mover_name="RTmin"/>
+                	<Add mover_name="hard_min"/>
+		</ParsedProtocol>
+
+		<LoopOver name="iter4" mover_name="refinement_block" iterations="4"/> #16 reacpk+min iterations total
+	</MOVERS>
+
+	<FILTERS>
+        	<ScoreType name="stability_score_full" scorefxn="talaris_full" score_type="total_score" confidence="0" threshold="0"/>
+        	<ScoreType name="stability_without_pssm" scorefxn="tal_no_pssm" score_type="total_score" confidence="0" threshold="0"/>
+	       	<ScoreType name="stability_pure" scorefxn="talaris_pure" score_type="total_score" confidence="0" threshold="0" />
+		<Rmsd name="rmsd" confidence="0"/>
+		<Time name="timer"/>
+	</FILTERS>
+
+	<PROTOCOLS>
+	#1st round is soft design and min, 2nd round is soft design hard min, 3rd and 4th round are hard design and min. In the 4th round also include RT min.
+        	<Add filter_name="timer"/>
+			<Add mover_name="add_CA_cst"/>
+        	<Add mover_name="iter4"/>
+        	<Add filter_name="stability_score_full"/>
+        	<Add filter_name="stability_without_pssm"/>
+        	<Add filter_name="stability_pure"/>
+        	<Add filter_name="rmsd"/>
+		<Add filter_name="timer"/>
+	</PROTOCOLS>
+
+</ROSETTASCRIPTS>

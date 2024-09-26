@@ -37,7 +37,7 @@ class RosettaScriptsVariable:
 
 
 @dataclass(frozen=True)
-class RosettaScriptVariables:
+class RosettaScriptsVariableGroup:
     variables: List[RosettaScriptsVariable]
 
     @property
@@ -53,7 +53,7 @@ class RosettaScriptVariables:
         return {rsv.k: rsv.v for rsv in self.variables}
 
     @classmethod
-    def from_dict(cls, var_pair: Dict[str, str]) -> "RosettaScriptVariables":
+    def from_dict(cls, var_pair: Dict[str, str]) -> "RosettaScriptsVariableGroup":
         variables = [RosettaScriptsVariable(k=k, v=str(v)) for k, v in var_pair.items()]
         instance = cls(variables)
         if instance.empty:
@@ -168,12 +168,13 @@ class Rosetta:
     nproc: Union[int, None] = field(default_factory=os.cpu_count)
 
     flags: Optional[List[str]] = field(default_factory=list)
-    opts: Optional[List[str]] = field(default_factory=list)
+    opts: Optional[List[Union[str, RosettaScriptsVariableGroup]]] = field(default_factory=list)
     use_mpi: bool = False
     mpi_node: Optional[MPI_node] = None
 
     job_id: str = "default"
     output_dir: str = ""
+    save_all_together: bool = False
 
     @staticmethod
     def expand_input_dict(d: Dict[str, str]) -> List[str]:
@@ -187,7 +188,7 @@ class Rosetta:
     def output_pdb_dir(self) -> str:
         if not self.output_dir:
             raise ValueError("Output directory not set.")
-        p = os.path.join(self.output_dir, self.job_id, "pdb")
+        p = os.path.join(self.output_dir, self.job_id, "pdb" if self.save_all_together else "all")
         os.makedirs(p, exist_ok=True)
         return p
 
@@ -195,7 +196,7 @@ class Rosetta:
     def output_scorefile_dir(self) -> str:
         if not self.output_dir:
             raise ValueError("Output directory not set.")
-        p = os.path.join(self.output_dir, self.job_id, "scorefile")
+        p = os.path.join(self.output_dir, self.job_id, "scorefile" if self.save_all_together else "all")
         os.makedirs(p, exist_ok=True)
         return p
 
@@ -295,7 +296,14 @@ class Rosetta:
                 cmd.append(f"@{flag}")
 
         if self.opts:
-            cmd.extend(self.opts)
+            cmd.extend([opt for opt in self.opts if isinstance(opt, str)])
+
+            any_rosettascript_vars = [opt for opt in self.opts if isinstance(opt, RosettaScriptsVariableGroup)]
+            if any(any_rosettascript_vars):
+                for v in any_rosettascript_vars:
+                    _v = v.aslonglist
+                    print(f"Composing command with {_v}")
+                    cmd.extend(_v)
 
         if self.output_dir:
             cmd.extend(["-out:path:pdb", self.output_pdb_dir, "-out:path:score", self.output_scorefile_dir])
