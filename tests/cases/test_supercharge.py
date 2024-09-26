@@ -37,7 +37,7 @@ def test_app_supercharge():
 
     # Verify that the output files were created as expected
 
-    scorefiles = [f for f in os.listdir("tests/outputs/test_supercharge/scorefile") if f.startswith(instance)]
+    scorefiles = [f for f in os.listdir("tests/outputs/test_supercharge/all") if f.startswith(instance)]
 
     assert len(scorefiles) > 0
 

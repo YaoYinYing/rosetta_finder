@@ -368,7 +368,10 @@ class RosettaEnergyUnitAnalyser:
         if self.df.empty:
             return {}
         min_idx = self.df[self.score_term].idxmin()
-        min_score = self.df[self.score_term].min()
-        min_decoy = self.df.iloc[min_idx]["description"]
+        min_record = self.df[self.df.index == min_idx]
 
-        return {"idx": min_idx, "score": min_score, "decoy": min_decoy}
+        return {
+            "idx": min_idx,
+            "score": float(min_record[self.score_term].iloc[0]),
+            "decoy": str(min_record["description"].iloc[0]),
+        }
