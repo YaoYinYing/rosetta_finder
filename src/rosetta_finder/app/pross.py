@@ -1,7 +1,8 @@
 import os
 from typing import Optional
 from dataclasses import dataclass
-from rosetta_finder import Rosetta, RosettaScriptsVariableGroup
+from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser
+from rosetta_finder.utils import timing
 from rosetta_finder.app.utils import PDBProcessor
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +17,7 @@ class PROSS:
     blast_bin: Optional[str] = None
     uniref90_db_blast: Optional[str] = None
 
-    save_dir: str = "tests/output"
+    save_dir: str = "tests/outputs"
     job_id: str = "pross"
 
     CA_constraints: str = ""
@@ -29,7 +30,7 @@ class PROSS:
         self.CA_constraints = os.path.join(self.save_dir, self.job_id, f"{self.instance}_bbCA.cst")
         PDBProcessor.convert_pdb_to_constraints(self.pdb, self.CA_constraints)
 
-    def refine(self):
+    def refine(self, nstruct=1):
         refinement_dir = os.path.join(self.save_dir, self.job_id, "refinement")
 
         rosetta = Rosetta(
@@ -48,14 +49,19 @@ class PROSS:
                 ),
             ],
             output_dir=refinement_dir,
-            save_all_together=True,
+            save_all_together=False,
+            job_id="pross_refinement",
         )
-        rosetta.run(inputs=[{"-in:file:s": self.pdb}])
+
+        with timing("PROSS: Refinement"):
+            rosetta.run(inputs=[{"-in:file:s": self.pdb}], nstruct=nstruct)
+
+        best_refined_decoy = RosettaEnergyUnitAnalyser(rosetta.output_scorefile_dir)
 
 
 def main():
     pross = PROSS(pdb="tests/data/3fap_hf3_A.pdb", pssm="tests/data/3fap_hf3_A_ascii_mtx_file")
-    pross.refine()
+    pross.refine(30)
 
 
 if __name__ == "__main__":

@@ -14,8 +14,8 @@ from rosetta_finder.rosetta import (
     MPI_node,
     Rosetta,
     MPI_IncompatibleInputWarning,
-    timing,
 )
+from rosetta_finder.utils import timing
 from rosetta_finder.rosetta_finder import RosettaFinder, RosettaBinary
 
 

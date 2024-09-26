@@ -9,6 +9,18 @@ sample_score_file = "tests/data/score.sc"
 best_decoy = {"score": -388.465, "decoy": "3fap_hf3_A_0003"}
 best_decoy_cat = {"score": -788.235, "decoy": "3fap_hf3_A_0006"}
 
+top3_total_score = (
+    {"score": -788.235, "decoy": "3fap_hf3_A_0006"},
+    {"score": -455.465, "decoy": "3fap_hf3_A_0005"},
+    {"score": -388.465, "decoy": "3fap_hf3_A_0003"},
+)
+
+top3_fa_atr = (
+    {"score": -595.567, "decoy": "3fap_hf3_A_0002"},
+    {"score": -595.567, "decoy": "3fap_hf3_A_0006"},
+    {"score": -575.567, "decoy": "3fap_hf3_A_0005"},
+)
+
 # Test a non-existing score file
 
 
@@ -21,6 +33,14 @@ class TestRosettaEnergyUnitAnalyser:
     def test_multiple_score_files(self):
         analyser = RosettaEnergyUnitAnalyser(score_file=os.path.dirname(sample_score_file))
         assert analyser.best_decoy == best_decoy_cat
+
+    def test_top3_total_score(self):
+        analyser = RosettaEnergyUnitAnalyser(score_file=os.path.dirname(sample_score_file))
+        assert analyser.top(3) == top3_total_score
+
+    def test_top3_fa_atr(self):
+        analyser = RosettaEnergyUnitAnalyser(score_file=os.path.dirname(sample_score_file))
+        assert analyser.top(3, "fa_atr") == top3_fa_atr
 
     def test_non_existing_file(self):
         with pytest.raises(FileNotFoundError):

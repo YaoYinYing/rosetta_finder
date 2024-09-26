@@ -5,7 +5,8 @@
 """Python Package Template"""
 from __future__ import annotations
 from .rosetta_finder import RosettaBinary, RosettaFinder, main
-from .rosetta import Rosetta, timing, RosettaScriptsVariableGroup, MPI_node, RosettaEnergyUnitAnalyser
+from .rosetta import Rosetta, RosettaScriptsVariableGroup, MPI_node, RosettaEnergyUnitAnalyser
+from .utils import timing
 
 __all__ = [
     "RosettaFinder",

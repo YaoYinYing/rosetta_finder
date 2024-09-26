@@ -2,7 +2,7 @@ import copy
 from dataclasses import dataclass, field
 import shutil
 import time
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 import subprocess
 import os
 import random
@@ -70,15 +70,6 @@ class RosettaScriptsVariableGroup:
             xml_content_copy = xml_content_copy.replace(f"%%{k}%%", v)
 
         return xml_content_copy
-
-
-@contextlib.contextmanager
-def timing(msg: str):
-    print("Started %s", msg)
-    tic = time.time()
-    yield
-    toc = time.time()
-    print("Finished %s in %.3f seconds", msg, toc - tic)
 
 
 @dataclass
@@ -192,7 +183,7 @@ class Rosetta:
     def output_pdb_dir(self) -> str:
         if not self.output_dir:
             raise ValueError("Output directory not set.")
-        p = os.path.join(self.output_dir, self.job_id, "pdb" if self.save_all_together else "all")
+        p = os.path.join(self.output_dir, self.job_id, "pdb" if not self.save_all_together else "all")
         os.makedirs(p, exist_ok=True)
         return p
 
@@ -200,7 +191,7 @@ class Rosetta:
     def output_scorefile_dir(self) -> str:
         if not self.output_dir:
             raise ValueError("Output directory not set.")
-        p = os.path.join(self.output_dir, self.job_id, "scorefile" if self.save_all_together else "all")
+        p = os.path.join(self.output_dir, self.job_id, "scorefile" if not self.save_all_together else "all")
         os.makedirs(p, exist_ok=True)
         return p
 
@@ -277,7 +268,12 @@ class Rosetta:
             else:
                 input_args = []
 
-            cmd_jobs = [_cmd + input_args + ["-suffix", f"_{i:05}", "-no_nstruct_label"] for i in range(1, nstruct + 1)]
+            cmd_jobs = [
+                _cmd
+                + input_args
+                + ["-suffix", f"_{i:05}", "-no_nstruct_label", "-out:file:scorefile", f"{self.job_id}.score.{i:05}.sc"]
+                for i in range(1, nstruct + 1)
+            ]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands on {nstruct} decoys."))
         elif inputs:
             cmd_jobs = [_cmd + self.expand_input_dict(input_arg) for input_arg in inputs]
@@ -363,14 +359,34 @@ class RosettaEnergyUnitAnalyser:
         if not self.score_term in self.df.columns:
             raise ValueError(f'Score term "{self.score_term}" not found in score file.')
 
+    @staticmethod
+    def df2dict(dfs: pd.DataFrame, k: str = "total_score") -> Tuple[Dict[str, Union[str, float]]]:
+
+        t = tuple(
+            {
+                "score": float(dfs[dfs.index == i][k].iloc[0]),
+                "decoy": str(dfs[dfs.index == i]["description"].iloc[0]),
+            }
+            for i in dfs.index
+        )
+
+        return t  # type: ignore
+
     @property
     def best_decoy(self) -> Dict[str, Union[str, float]]:
         if self.df.empty:
             return {}
-        min_idx = self.df[self.score_term].idxmin()
-        min_record = self.df[self.df.index == min_idx]
+        return self.top(1)[0]
 
-        return {
-            "score": float(min_record[self.score_term].iloc[0]),
-            "decoy": str(min_record["description"].iloc[0]),
-        }
+    def top(self, rank: int = 1, score_term: Optional[str] = None) -> Tuple[Dict[str, Union[str, float]]]:
+        if rank <= 0:
+            raise ValueError(f"Rank must be greater than 0")
+
+        # override score_term if provided
+        score_term = score_term if score_term is not None and score_term in self.df.columns else self.score_term
+
+        df = self.df.sort_values(
+            by=score_term if score_term is not None and score_term in self.df.columns else self.score_term
+        ).head(rank)
+
+        return self.df2dict(dfs=df, k=score_term)
