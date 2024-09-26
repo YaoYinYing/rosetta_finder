@@ -10,7 +10,7 @@ import pytest
 # Import the classes from your module
 from rosetta_finder.rosetta import (
     RosettaScriptsVariable,
-    RosettaScriptVariables,
+    RosettaScriptsVariableGroup,
     MPI_node,
     Rosetta,
     MPI_IncompatibleInputWarning,
@@ -38,12 +38,12 @@ def test_rosetta_scripts_variable():
 
 def test_rosetta_script_variables_empty():
     with pytest.raises(ValueError):
-        RosettaScriptVariables.from_dict({})
+        RosettaScriptsVariableGroup.from_dict({})
 
 
 def test_rosetta_script_variables():
     variables_dict = {"input_pdb": "test.pdb", "output_pdb": "result.pdb"}
-    script_variables = RosettaScriptVariables.from_dict(variables_dict)
+    script_variables = RosettaScriptsVariableGroup.from_dict(variables_dict)
     assert not script_variables.empty
     assert len(script_variables.variables) == 2
     expected_longlist = ["-parser:script_vars", "input_pdb=test.pdb", "-parser:script_vars", "output_pdb=result.pdb"]
