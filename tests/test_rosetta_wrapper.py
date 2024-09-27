@@ -92,6 +92,7 @@ def test_mpi_node_initialization_with_node_matrix(tmp_path):
             f.write("node1 slots=2\nnode2 slots=2\n")
         assert mpi_node.host_file == [mpi_node.mpi_excutable, "--hostfile", mpi_node.node_file]
 
+
 @pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_mpi_node_apply():
     with patch("shutil.which", return_value="/usr/bin/mpirun"):
@@ -198,10 +199,10 @@ def test_rosetta_init_no_mpi_executable(mock_which, temp_dir):
 
     rosetta_binary = RosettaFinder().find_binary("rosetta_scripts")
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.warns(UserWarning) as record:
         Rosetta(bin=rosetta_binary, mpi_node=MPI_node(0, {"node1": 1}))
 
-    assert "MPI nodes are given yet not supported" in str(excinfo.value)
+    assert any("MPI nodes are given yet not supported" in str(warning.message) for warning in record)
 
 
 @patch("os.path.isfile", return_value=True)
