@@ -21,7 +21,7 @@ def test_app_supercharge():
 
     # Ensure the function runs without exceptions
     try:
-        supercharge(pdb, abs_target_charge=abs_target_charge, nproc=os.cpu_count())
+        ret=supercharge(pdb, abs_target_charge=abs_target_charge, nproc=os.cpu_count())
     except Exception as e:
         pytest.fail(f"supercharge raised an exception: {e}")
 
@@ -32,10 +32,12 @@ def test_app_supercharge():
     assert len(scorefiles) > 0
 
     # assert len(scorefiles) == len(expect_total_jobs)
+    base_dir=ret[0].base_dir
 
-    assert os.path.isfile("resfile_output_Rsc")
 
-    if os.path.isfile("resfile_output_Rsc"):
-        os.remove("resfile_output_Rsc")
-    if os.path.isdir("tests/outputs/test_supercharge"):
-        shutil.rmtree("tests/outputs/test_supercharge")
+    assert base_dir is not None
+    assert os.path.isdir(base_dir)
+
+    for r in ret:
+        assert 'resfile_output_Rsc' in os.listdir(r.runtime_dir)
+        shutil.rmtree(r.runtime_dir)

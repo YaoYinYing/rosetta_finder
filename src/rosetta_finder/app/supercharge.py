@@ -1,18 +1,19 @@
 import os
-from typing import Optional
+from typing import List, Optional
 from rosetta_finder import Rosetta
+from rosetta_finder.rosetta import RosettaCmdTask
 
 
 def supercharge(
     pdb: str,
     abs_target_charge=20,
     nproc: Optional[int] = 4,
-):
+) -> List[RosettaCmdTask]:
 
     rosetta = Rosetta(
         "supercharge",
         job_id="test_supercharge",
-        output_dir="tests/outputs/",
+        output_dir=os.path.abspath("tests/outputs/"),
         nproc=nproc,
         opts=[
             "-in:file:s",
@@ -46,15 +47,17 @@ def supercharge(
             "-overwrite",
         ],
         save_all_together=True,
+        isolation=True
     )
     instance = os.path.basename(pdb)[:-4]
 
-    rosetta.run(
+    return rosetta.run(
         inputs=[
             {"-out:file:scorefile": f"{instance}_charge_{c}.sc", "-target_net_charge": str(c)}
             for c in range(-abs_target_charge, abs_target_charge, 2)
         ]
     )
+
 
 
 def main():

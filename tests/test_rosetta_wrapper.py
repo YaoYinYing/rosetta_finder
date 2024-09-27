@@ -4,11 +4,13 @@ import shutil
 import subprocess
 import tempfile
 from unittest.mock import patch, MagicMock, mock_open
+import warnings
 
 import pytest
 
 # Import the classes from your module
 from rosetta_finder.rosetta import (
+    RosettaCmdTask,
     RosettaScriptsVariable,
     RosettaScriptsVariableGroup,
     MPI_node,
@@ -143,12 +145,12 @@ def test_rosetta_run_local(mock_popen, mock_isfile, mock_which, temp_dir):
     rosetta = Rosetta(bin=rosetta_binary, nproc=2, flags=["flags.txt"], opts=["-in:file:s", "input.pdb"])
     cmd = rosetta.compose()
 
-    assert cmd == [rosetta_binary.full_path, "@flags.txt", "-in:file:s", "input.pdb"]
+    assert cmd == [rosetta_binary.full_path, f"@{os.path.abspath('flags.txt')}", "-in:file:s", "input.pdb"]
 
     ret = rosetta.run(nstruct=nstruct)
 
     assert len(ret) == nstruct
-    assert all(r is None for r in ret)
+    assert all(isinstance(r, RosettaCmdTask) for r in ret)
 
 
 @patch("shutil.which", return_value="/usr/bin/mpirun")
@@ -176,12 +178,18 @@ def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir):
     mock_process.wait.return_value = 0
     mock_popen.return_value = mock_process
 
-    rosetta.run_mpi(cmd=rosetta.compose(), nstruct=2)
+    base_cmd=rosetta.compose()
+
+    rosetta.run_mpi(base_cmd=base_cmd, nstruct=2)
 
     # Verify that the execute method was called once
     mock_popen.assert_called_once()
 
-    expected_cmd = mpi_node.local + [rosetta_binary.full_path, "-nstruct", "2"]
+    expected_cmd = mpi_node.local
+    if os.getuid() == 0:
+        expected_cmd.append('--allow-run-as-root')
+
+    expected_cmd.extend([rosetta_binary.full_path, "-nstruct", "2"])
     mock_popen.assert_called_with(
         expected_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding="utf-8"
     )
@@ -217,7 +225,7 @@ def test_rosetta_compose(mock_isfile, temp_dir):
 
     rosetta = Rosetta(bin=rosetta_binary, flags=["flags.txt"], opts=["-in:file:s", "input.pdb"])
 
-    expected_cmd = [rosetta_binary.full_path, "@flags.txt", "-in:file:s", "input.pdb"]
+    expected_cmd = [rosetta_binary.full_path, f"@{os.path.abspath('flags.txt')}", "-in:file:s", "input.pdb"]
     cmd = rosetta.compose()
     assert cmd == expected_cmd
 
@@ -262,7 +270,8 @@ def test_rosetta_execute_failure(mock_popen, mock_which, temp_dir):
     mock_popen.return_value = mock_process
 
     with pytest.raises(RuntimeError):
-        rosetta.execute(["invalid_command"])
+        invalid_task=RosettaCmdTask(cmd=['invalid_command'])
+        rosetta.execute(invalid_task)
 
     # Verify that the command was attempted
     mock_popen.assert_called_once()

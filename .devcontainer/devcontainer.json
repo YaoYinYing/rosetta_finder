@@ -25,9 +25,17 @@
 				"ms-python.flake8",
 				"ms-python.black-formatter",
 				"ms-vsliveshare.vsliveshare",
+				"alibaba-cloud.tongyi-lingma",
+				"rogalmic.vscode-xml-complete",
+				"foxundermoon.shell-format",
+				"yzhang.markdown-all-in-one",
+				"reageyao.biosyntax",
+				"redhat.vscode-yaml",
+				"tabnine.tabnine-vscode",
 				"ryanluker.vscode-coverage-gutters",
 				"bungcip.better-toml",
-				"GitHub.copilot"
+				"GitHub.copilot",
+				"arianjamasb.protein-viewer"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/local/bin/python",
