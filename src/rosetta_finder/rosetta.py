@@ -263,7 +263,7 @@ class Rosetta:
         if retcode:
             print(f"Command failed with return code {retcode}")
             print(stdout)
-            print(stderr)
+            warnings.warn(RuntimeWarning(stderr))
             raise RuntimeError(f"Command failed with return code {retcode}")
 
     def run_mpi(
