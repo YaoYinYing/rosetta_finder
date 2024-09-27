@@ -45,6 +45,7 @@ def supercharge(
             "-unmute",
             "protocols.design_opt.Supercharge",
             "-overwrite",
+            "-run:score_only"
         ],
         save_all_together=True,
         isolation=True

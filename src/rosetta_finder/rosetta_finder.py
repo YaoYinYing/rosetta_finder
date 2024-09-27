@@ -232,9 +232,6 @@ def main() -> None:
     """
     Main function to find the Rosetta binary.
 
-    Parameters:
-        bin_str (str): Name of the Rosetta binary to search for.
-
     Returns:
         None
     """

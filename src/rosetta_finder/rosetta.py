@@ -66,7 +66,7 @@ class RosettaScriptsVariableGroup:
 
     def apply_to_xml_content(self, xml_content: str):
         xml_content_copy = copy.deepcopy(xml_content)
-        for k, v in self.asdict:
+        for k, v in self.asdict.items():
             if f"%%{k}%%" not in xml_content_copy:
                 warnings.warn(RosettaScriptVariableNotExistWarning(f"Variable {k} not in Rosetta Script content."))
                 continue
@@ -81,7 +81,7 @@ class MPI_node:
     node_matrix: Optional[Dict[str, int]] = None  # Node ID: nproc
     node_file = f"nodefile_{random.randint(1,9_999_999_999)}.txt"
 
-    user=os.getuid()
+    user = os.getuid()
 
     def __post_init__(self):
 
@@ -111,12 +111,12 @@ class MPI_node:
         cmd_copy = copy.copy(cmd)
         m = self.local if not self.node_matrix else self.host_file
         if self.user == 0:
-            m.append('--allow-run-as-root')
-            warnings.warn(UserWarning('Running Rosetta with MPI as Root User'))
+            m.append("--allow-run-as-root")
+            warnings.warn(UserWarning("Running Rosetta with MPI as Root User"))
 
         yield m + cmd_copy
 
-        if os.path.isfile(self.node_file):
+        if os.path.exists(self.node_file):
             os.remove(self.node_file)
 
     @classmethod
@@ -153,8 +153,8 @@ class MPI_node:
 @dataclass
 class RosettaCmdTask:
     cmd: List[str]
-    task_label: Optional[str] =None
-    base_dir: Optional[str] = 'tests/outputs/runtimes/' # a base directory for run local task
+    task_label: Optional[str] = None
+    base_dir: Optional[str] = "tests/outputs/runtimes/"  # a base directory for run local task
 
     @property
     def runtime_dir(self) -> str:  # The directory for storing runtime output
@@ -162,10 +162,11 @@ class RosettaCmdTask:
             raise ValueError("task_label is required for calling this attribute")
 
         if not self.base_dir:
-            warnings.warn('Fixing base_dir to `runtime`')
-            self.base_dir= os.path.abspath('runtime')
+            warnings.warn("Fixing base_dir to `runtime`")
+            self.base_dir = os.path.abspath("runtime")
 
         return os.path.join(self.base_dir, self.task_label)
+
 
 @dataclass
 class Rosetta:
@@ -252,7 +253,9 @@ class Rosetta:
 
         if self.mpi_node is not None:
             if self.bin.mode != "mpi":
-                warnings.warn(UserWarning("MPI nodes are given yet not supported. Maybe in Dockerized Rosetta container?"))
+                warnings.warn(
+                    UserWarning("MPI nodes are given yet not supported. Maybe in Dockerized Rosetta container?")
+                )
 
             self.use_mpi = True
             return
@@ -260,8 +263,9 @@ class Rosetta:
         else:
             warnings.warn(UserWarning("Using MPI binary as static build."))
             self.use_mpi = False
+
     @staticmethod
-    def _isolated_execute(task: RosettaCmdTask)->RosettaCmdTask:
+    def _isolated_execute(task: RosettaCmdTask) -> RosettaCmdTask:
         if not task.task_label:
             raise ValueError("Task label is required when executing the command in isolated mode.")
 
@@ -272,12 +276,10 @@ class Rosetta:
             return Rosetta._non_isolated_execute(task)
 
     @staticmethod
-    def execute(task: RosettaCmdTask)-> RosettaCmdTask:
+    def execute(task: RosettaCmdTask) -> RosettaCmdTask:
         if not task.task_label:
             return Rosetta._non_isolated_execute(task)
         return Rosetta._isolated_execute(task)
-
-
 
     @staticmethod
     def _non_isolated_execute(task: RosettaCmdTask) -> RosettaCmdTask:
@@ -287,11 +289,7 @@ class Rosetta:
         :param cmd: Command to be executed.
         """
         process = subprocess.Popen(
-            task.cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-            encoding="utf-8"
+            task.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding="utf-8"
         )
 
         print(f'Lauching command: {" ".join(task.cmd)}')
@@ -355,7 +353,7 @@ class Rosetta:
 
         _base_cmd = copy.copy(base_cmd)
 
-        now=datetime.now().strftime('%Y%m%d_%H%M%S') # formatted date-time
+        now = datetime.now().strftime("%Y%m%d_%H%M%S")  # formatted date-time
 
         if nstruct and nstruct > 0:
 
@@ -365,12 +363,19 @@ class Rosetta:
                     _base_cmd.extend(__i)
                     print(f"Additional input args is passed: {__i}")
 
-
             cmd_jobs = [
                 RosettaCmdTask(
-                    cmd=_base_cmd + ["-suffix", f"_{i:05}", "-no_nstruct_label", "-out:file:scorefile", f"{self.job_id}.score.{i:05}.sc"],
-                    task_label=f'task_{self.job_id}-{i:05}' if self.isolation else None,
-                    base_dir=os.path.join(self.output_dir, f'{now}-{self.job_id}-runtimes'))
+                    cmd=_base_cmd
+                    + [
+                        "-suffix",
+                        f"_{i:05}",
+                        "-no_nstruct_label",
+                        "-out:file:scorefile",
+                        f"{self.job_id}.score.{i:05}.sc",
+                    ],
+                    task_label=f"task_{self.job_id}-{i:05}" if self.isolation else None,
+                    base_dir=os.path.join(self.output_dir, f"{now}-{self.job_id}-runtimes"),
+                )
                 for i in range(1, nstruct + 1)
             ]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands on {nstruct} decoys."))
@@ -378,21 +383,20 @@ class Rosetta:
             cmd_jobs = [
                 RosettaCmdTask(
                     cmd=_base_cmd + self.expand_input_dict(input_arg),
-                    task_label=f'task-{self.job_id}-no-{i}' if self.isolation else None,
-                    base_dir=os.path.join(self.output_dir, f'{now}-{self.job_id}-runtimes')
-                    )
-                    for i,input_arg in enumerate(inputs)]
+                    task_label=f"task-{self.job_id}-no-{i}" if self.isolation else None,
+                    base_dir=os.path.join(self.output_dir, f"{now}-{self.job_id}-runtimes"),
+                )
+                for i, input_arg in enumerate(inputs)
+            ]
             warnings.warn(UserWarning(f"Processing {len(cmd_jobs)} commands"))
         else:
             cmd_jobs = [_base_cmd]
 
             warnings.warn(UserWarning("No inputs are given. Running single job."))
 
-        ret = Parallel(n_jobs=self.nproc, verbose=100)(
-            delayed(Rosetta.execute)(cmd_job) for cmd_job in cmd_jobs
-        )
+        ret = Parallel(n_jobs=self.nproc, verbose=100)(delayed(Rosetta.execute)(cmd_job) for cmd_job in cmd_jobs)
         # warnings.warn(UserWarning(str(ret)))
-        return list(ret) # type: ignore
+        return list(ret)  # type: ignore
 
     def run(
         self,
@@ -446,7 +450,14 @@ class Rosetta:
                     cmd.extend(_v)
 
         if self.output_dir:
-            cmd.extend(["-out:path:pdb", os.path.abspath(self.output_pdb_dir), "-out:path:score", os.path.abspath(self.output_scorefile_dir)])
+            cmd.extend(
+                [
+                    "-out:path:pdb",
+                    os.path.abspath(self.output_pdb_dir),
+                    "-out:path:score",
+                    os.path.abspath(self.output_scorefile_dir),
+                ]
+            )
 
         return cmd
 

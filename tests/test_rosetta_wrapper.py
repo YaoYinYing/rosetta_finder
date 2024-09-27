@@ -45,6 +45,27 @@ def test_rosetta_script_variables_empty():
         RosettaScriptsVariableGroup.from_dict({})
 
 
+def test_rosetta_script_variables_apply_on_xml():
+    xml_content = """<Reweight scoretype="coordinate_constraint" weight="%%cst_value%%"/>"""
+    rsv = RosettaScriptsVariableGroup.from_dict(var_pair={"cst_value": "0.4"})
+    updated_xml_content = rsv.apply_to_xml_content(xml_content)
+    assert updated_xml_content == """<Reweight scoretype="coordinate_constraint" weight="0.4"/>"""
+
+
+def test_rosetta_script_variables_apply_many_on_xml():
+    xml_content = """<Reweight scoretype="coordinate_constraint" weight="%%cst_value%%"/>
+    <PreventResiduesFromRepacking name="fix_res" reference_pdb_id="%%pdb_reference%%" residues="%%res_to_fix%%"/>"""
+    rsv = RosettaScriptsVariableGroup.from_dict(
+        var_pair={"cst_value": "0.4", "pdb_reference": "pdb1.pdb", "res_to_fix": "1A,2C"}
+    )
+    updated_xml_content = rsv.apply_to_xml_content(xml_content)
+    assert (
+        updated_xml_content
+        == """<Reweight scoretype="coordinate_constraint" weight="0.4"/>
+    <PreventResiduesFromRepacking name="fix_res" reference_pdb_id="pdb1.pdb" residues="1A,2C"/>"""
+    )
+
+
 def test_rosetta_script_variables():
     variables_dict = {"input_pdb": "test.pdb", "output_pdb": "result.pdb"}
     script_variables = RosettaScriptsVariableGroup.from_dict(variables_dict)
@@ -153,11 +174,16 @@ def test_rosetta_run_local(mock_popen, mock_isfile, mock_which, temp_dir):
     assert all(isinstance(r, RosettaCmdTask) for r in ret)
 
 
+# Test RosettaBinary.from_filename with valid filenames
+@pytest.mark.parametrize(
+    "user,uid,userstring",
+    [("root", 0, "--allow-run-as-root"), ("debian", 8964, "")],
+)
 @patch("shutil.which", return_value="/usr/bin/mpirun")
 @patch("os.path.isfile", return_value=True)
 @patch("subprocess.Popen")
 @pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
-def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir):
+def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir, user, uid, userstring):
 
     file_path = os.path.join(temp_dir, "rosetta_scripts.mpi.linuxgccrelease")
     os.environ["ROSETTA_BIN"] = temp_dir
@@ -167,9 +193,9 @@ def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir):
     os.chmod(str(file_path), 0o755)
 
     # Mock the Rosetta binary with MPI mode
-    rosetta_binary = RosettaFinder().find_binary("rosetta_scripts")
-
+    rosetta_binary = RosettaBinary(temp_dir, "rosetta_scripts", "mpi", "linux", "gcc", "release")
     mpi_node = MPI_node(nproc=4)
+    mpi_node.user = uid
     rosetta = Rosetta(bin=rosetta_binary, mpi_node=mpi_node)
 
     # Mock the process
@@ -178,16 +204,22 @@ def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir):
     mock_process.wait.return_value = 0
     mock_popen.return_value = mock_process
 
-    base_cmd=rosetta.compose()
+    base_cmd = rosetta.compose()
 
-    rosetta.run_mpi(base_cmd=base_cmd, nstruct=2)
+    if user == "root":
+        with pytest.warns(UserWarning) as record:
+            rosetta.run_mpi(base_cmd=base_cmd, nstruct=2)
+            assert any("Running Rosetta with MPI as Root User" in str(warning.message) for warning in record)
+
+    else:
+        rosetta.run_mpi(base_cmd=base_cmd, nstruct=2)
 
     # Verify that the execute method was called once
     mock_popen.assert_called_once()
 
-    expected_cmd = mpi_node.local
-    if os.getuid() == 0:
-        expected_cmd.append('--allow-run-as-root')
+    expected_cmd = mpi_node.local + [userstring]
+    while "" in expected_cmd:
+        expected_cmd.remove("")
 
     expected_cmd.extend([rosetta_binary.full_path, "-nstruct", "2"])
     mock_popen.assert_called_with(
@@ -270,7 +302,7 @@ def test_rosetta_execute_failure(mock_popen, mock_which, temp_dir):
     mock_popen.return_value = mock_process
 
     with pytest.raises(RuntimeError):
-        invalid_task=RosettaCmdTask(cmd=['invalid_command'])
+        invalid_task = RosettaCmdTask(cmd=["invalid_command"])
         rosetta.execute(invalid_task)
 
     # Verify that the command was attempted
