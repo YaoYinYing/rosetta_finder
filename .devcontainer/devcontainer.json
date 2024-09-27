@@ -4,7 +4,13 @@
 	"name": "Python Environment",
 	"build": {
 		"dockerfile": "Dockerfile",
-		"context": ".."
+		"context": "..",
+		"args": {
+			"HTTPS_PROXY": "http://a100-internal.yaoyy.moe:10089",
+			"HTTP_PROXY": "http://a100-internal.yaoyy.moe:10089",
+			"https_proxy": "http://a100-internal.yaoyy.moe:10089",
+			"http_proxy": "http://a100-internal.yaoyy.moe:10089"
+		}
 	},
 	"customizations": {
 		"vscode": {
@@ -37,6 +43,24 @@
 				"isort.path": [
 					"/usr/local/py-utils/bin/isort"
 				]
+			},
+			"remoteEnv": {
+				"HTTPS_PROXY": "http://a100-internal.yaoyy.moe:10089",
+				"HTTP_PROXY": "http://a100-internal.yaoyy.moe:10089",
+				"https_proxy": "http://a100-internal.yaoyy.moe:10089",
+				"http_proxy": "http://a100-internal.yaoyy.moe:10089",
+				"NO_PROXY": "localhost, mycorp.internal, host.docker.internal",
+				"no_proxy": "localhost, mycorp.internal, host.docker.internal"
+			},
+			"containerEnv": {
+				"HTTPS_PROXY": "http://a100-internal.yaoyy.moe:10089",
+				"HTTP_PROXY": "http://a100-internal.yaoyy.moe:10089",
+				"https_proxy": "http://a100-internal.yaoyy.moe:10089",
+				"http_proxy": "http://a100-internal.yaoyy.moe:10089",
+				"NO_PROXY": "localhost, mycorp.internal, host.docker.internal",
+				"no_proxy": "localhost, mycorp.internal, host.docker.internal",
+				"REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca.cert",
+				"CA_BUNDLE": "/etc/ssl/certs/ca.cert"
 			}
 		}
 	},

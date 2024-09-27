@@ -1,12 +1,24 @@
-FROM mcr.microsoft.com/devcontainers/python:3
+FROM dockerhub.yaoyy.moe/rosettacommons/rosetta:mpi
 
-RUN python -m pip install --upgrade pip \
+ENV HTTP_PROXY=http://a100-internal.yaoyy.moe:10089
+ENV HTTPS_PROXY=http://a100-internal.yaoyy.moe:10089
+ENV ALL_PROXY=http://a100-internal.yaoyy.moe:10089
+
+ENV http_proxy=http://a100-internal.yaoyy.moe:10089
+ENV https_proxy=http://a100-internal.yaoyy.moe:10089
+ENV all_proxy=http://a100-internal.yaoyy.moe:10089
+ENV GITHUB_ROSETTA_TEST=YES
+
+RUN apt update -y && apt install git -y
+
+RUN python -m pip config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
+    && python -m pip install --upgrade pip \
     && python -m pip install 'flit>=3.8.0'
 
 ENV FLIT_ROOT_INSTALL=1
 
 COPY pyproject.toml .
 RUN touch README.md \
-    && mkdir -p src/python_package \
+    && mkdir -p src/rosetta_finder \
     && python -m flit install --only-deps --deps develop \
     && rm -r pyproject.toml README.md src

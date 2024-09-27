@@ -30,7 +30,8 @@ spark = [
 wrapper = [
     "joblib",
     "absl-py",
-    "pandas"
+    "pandas",
+    "biopython"
 ]
 test = [
     "bandit[toml]==1.7.10",

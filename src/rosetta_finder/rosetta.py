@@ -1,6 +1,7 @@
 import copy
 from dataclasses import dataclass, field
 import shutil
+import sys
 import time
 from typing import Dict, List, Literal, Optional, Tuple, Union
 import subprocess
@@ -8,6 +9,7 @@ import os
 import random
 import contextlib
 import warnings
+import platform
 
 import pandas as pd
 
@@ -78,6 +80,8 @@ class MPI_node:
     node_matrix: Optional[Dict[str, int]] = None  # Node ID: nproc
     node_file = f"nodefile_{random.randint(1,9_999_999_999)}.txt"
 
+    user=os.getuid()
+
     def __post_init__(self):
 
         for mpi_exec in ["mpirun", "mpicc", ...]:
@@ -105,6 +109,9 @@ class MPI_node:
     def apply(self, cmd: List[str]):
         cmd_copy = copy.copy(cmd)
         m = self.local if not self.node_matrix else self.host_file
+        if self.user == 0:
+            m.append('--allow-run-as-root')
+            warnings.warn(UserWarning('Running Rosetta with MPI as Root User'))
 
         yield m + cmd_copy
 
@@ -225,7 +232,7 @@ class Rosetta:
 
         if self.mpi_node is not None:
             if self.bin.mode != "mpi":
-                raise ValueError("MPI nodes are given yet not supported.")
+                warnings.warn(UserWarning("MPI nodes are given yet not supported. Maybe in Dockerized Rosetta container?"))
 
             self.use_mpi = True
             return

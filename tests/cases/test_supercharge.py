@@ -21,7 +21,7 @@ def test_app_supercharge():
 
     # Ensure the function runs without exceptions
     try:
-        supercharge(pdb, abs_target_charge=abs_target_charge)
+        supercharge(pdb, abs_target_charge=abs_target_charge, nproc=os.cpu_count())
     except Exception as e:
         pytest.fail(f"supercharge raised an exception: {e}")
 
