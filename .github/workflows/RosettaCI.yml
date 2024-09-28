@@ -8,11 +8,13 @@ on:
       - 'src/rosetta_finder/app/*'
       - 'tests/cases/*'
 
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  release:
-    types: [created]
+    branches:
+        - main
+
+env:
+  conda_env: PROSS
+  ROSETTA_BIN: /usr/local/bin/
+  GITHUB_ROSETTA_TEST: 'YES'
 
 jobs:
   RosettaTests:
@@ -21,13 +23,40 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        python:
-          - "3.8"
 
-    uses: YaoYinYing/action-python/.github/workflows/validation-dockerized.yml@v7.3.1-post-7
-    with:
-      workdir: '.'
-      python-version: ${{ matrix.python }}
-      docker-image: rosettacommons/rosetta:mpi
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      OS: ${{ matrix.os }}
+
+    container:
+      image: rosettacommons/rosetta:mpi
+
+
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup rosetta_finder on ${{ matrix.os }}
+        run: |
+          pip install '.[test,wrapper]' -U
+
+      - name: Run test cases
+        run: |
+            pytest tests/ -m 'integration'
+
+      - name: Convert coverage report to XML for codecov
+        run: |
+          coverage xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

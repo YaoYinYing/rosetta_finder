@@ -7,8 +7,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from rosetta_finder import RosettaFinder, RosettaBinary
-from .conftest import dockerized_rosetta, no_rosetta
-
+from tests.conftest import github_rosetta_test
 
 
 # Test RosettaBinary.from_filename with valid filenames
@@ -62,7 +61,7 @@ def test_rosetta_binary_from_filename_invalid(filename):
 @patch("pathlib.Path.iterdir")
 @patch("pathlib.Path.is_dir")
 @patch("pathlib.Path.exists")
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_find_binary_success(mock_exists, mock_is_dir, mock_iterdir):
     # Set up the mocks
     with patch.dict("os.environ", {"ROSETTA_BIN": "/mock/rosetta/bin"}):
@@ -94,7 +93,7 @@ def test_find_binary_success(mock_exists, mock_is_dir, mock_iterdir):
 @patch("pathlib.Path.iterdir")
 @patch("pathlib.Path.is_dir")
 @patch("pathlib.Path.exists")
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_find_binary_not_found(mock_exists, mock_is_dir, mock_iterdir):
     # Set up the mocks
     with patch.dict("os.environ", {"ROSETTA_BIN": "/mock/rosetta/bin"}):
@@ -129,7 +128,7 @@ def temp_dir():
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_integration_find_binary(temp_dir):
     # Create files in the temporary directory
     valid_filenames = [
@@ -180,7 +179,7 @@ def test_integration_find_binary(temp_dir):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_integration_no_binary_found(temp_dir):
     # Create invalid files only
     invalid_filenames = [

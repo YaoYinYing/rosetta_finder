@@ -19,8 +19,8 @@ from rosetta_finder.rosetta import (
 )
 from rosetta_finder.utils import timing
 from rosetta_finder.rosetta_finder import RosettaFinder, RosettaBinary
-from .conftest import dockerized_rosetta, no_rosetta
 
+from tests.conftest import github_rosetta_test
 
 
 ### Testing RosettaScriptsVariable ###
@@ -116,7 +116,7 @@ def test_mpi_node_initialization_with_node_matrix(tmp_path):
         assert mpi_node.host_file == [mpi_node.mpi_excutable, "--hostfile", mpi_node.node_file]
 
 
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_mpi_node_apply():
     with patch("shutil.which", return_value="/usr/bin/mpirun"):
         mpi_node = MPI_node(nproc=4)
@@ -182,7 +182,7 @@ def test_rosetta_run_local(mock_popen, mock_isfile, mock_which, temp_dir):
 @patch("shutil.which", return_value="/usr/bin/mpirun")
 @patch("os.path.isfile", return_value=True)
 @patch("subprocess.Popen")
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir, user, uid, userstring):
 
     file_path = os.path.join(temp_dir, "rosetta_scripts.mpi.linuxgccrelease")
@@ -228,7 +228,7 @@ def test_rosetta_run_mpi(mock_popen, mock_isfile, mock_which, temp_dir, user, ui
 
 
 @patch("shutil.which", return_value=None)
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
+@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
 def test_rosetta_init_no_mpi_executable(mock_which, temp_dir):
     file_path = os.path.join(temp_dir, "rosetta_scripts.static.linuxgccrelease")
     os.environ["ROSETTA_BIN"] = temp_dir

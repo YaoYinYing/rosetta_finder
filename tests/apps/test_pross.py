@@ -1,10 +1,9 @@
 import pytest
-from ..conftest import no_rosetta,dockerized_rosetta
+from ..conftest import no_rosetta
 
 
-
-@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
 @pytest.mark.integration
+@pytest.mark.skipif(no_rosetta(), reason="No Rosetta Installed.")
 def test_app_pross():
     from rosetta_finder.app.pross import main
 

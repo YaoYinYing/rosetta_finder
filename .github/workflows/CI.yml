@@ -20,7 +20,7 @@ jobs:
           - "3.11"
           - "3.12"
 
-    uses: YaoYinYing/action-python/.github/workflows/validation.yml@v7.3.1-post-7
+    uses: YaoYinYing/action-python/.github/workflows/validation.yml@v7.3.1-post-6
     with:
       workdir: '.'
       python-version: ${{ matrix.python }}

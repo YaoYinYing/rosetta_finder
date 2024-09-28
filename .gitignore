@@ -129,12 +129,4 @@ dmypy.json
 .pyre/
 tests/outputs/
 *.pdb
-*.sdf
-*.mol2
-*.mol
-*.tar
-*.tar.*
-*.tgz
-*.zip
-
 resfile_output_Rsc

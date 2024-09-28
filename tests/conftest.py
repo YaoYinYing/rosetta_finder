@@ -43,18 +43,6 @@ def no_rosetta():
     warnings.warn(UserWarning(f"Rosetta Installed: {has_rosetta_installed} - {result.stdout}"))
     return not has_rosetta_installed
 
-def dockerized_rosetta():
-    import subprocess
 
-    result = subprocess.run(
-        ["which", "rosetta_scripts"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
-    # Check that the command was successful
-    dockerized_rosetta = "rosetta_scripts" in result.stdout
-    warnings.warn(UserWarning(f"Dockerized Rosetta: {dockerized_rosetta} - {result.stdout}"))
-    return dockerized_rosetta
-
-
-
-
-
+def github_rosetta_test():
+    return os.environ.get("GITHUB_ROSETTA_TEST", "NO") == "YES"
