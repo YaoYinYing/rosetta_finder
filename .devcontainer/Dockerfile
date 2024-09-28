@@ -9,7 +9,7 @@ ENV https_proxy=http://a100-internal.yaoyy.moe:10089
 ENV all_proxy=http://a100-internal.yaoyy.moe:10089
 ENV GITHUB_ROSETTA_TEST=YES
 
-RUN apt update -y && apt install git -y
+RUN apt update -y && apt install git curl wget -y
 
 RUN python -m pip config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
     && python -m pip install --upgrade pip \

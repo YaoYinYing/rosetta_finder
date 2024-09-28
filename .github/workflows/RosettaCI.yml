@@ -43,6 +43,8 @@ jobs:
 
       - name: Setup rosetta_finder on ${{ matrix.os }}
         run: |
+          apt update -y
+          apt install gnupg2 git -y
           pip install '.[test,wrapper]' -U
 
       - name: Run test cases
