@@ -3,11 +3,11 @@ import subprocess
 from unittest import mock
 
 import pytest
-from .conftest import github_rosetta_test
+from .conftest import dockerized_rosetta, no_rosetta
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(github_rosetta_test(), reason="No need to run this test in Dockerized Rosetta.")
+@pytest.mark.skipif(not dockerized_rosetta(), reason="No need to run this test in non-Dockerized Rosetta.")
 def test_whichrosetta_integration(tmp_path, monkeypatch):
     """
     Test that 'whichrosetta' can find and execute a mock Rosetta binary.
