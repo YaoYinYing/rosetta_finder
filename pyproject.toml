@@ -31,7 +31,8 @@ wrapper = [
     "joblib",
     "absl-py",
     "pandas",
-    "biopython"
+    "biopython",
+    "rdkit"
 ]
 test = [
     "bandit[toml]==1.7.10",
