@@ -41,8 +41,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-
-
       - name: Setup rosetta_finder on ${{ matrix.os }}
         run: |
           pip install '.[test,wrapper]' -U
@@ -50,3 +48,15 @@ jobs:
       - name: Run test cases
         run: |
             pytest tests/ -m 'integration'
+
+      - name: Convert coverage report to XML for codecov
+        run: |
+          coverage xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
