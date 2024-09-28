@@ -32,7 +32,8 @@ wrapper = [
     "absl-py",
     "pandas",
     "biopython",
-    "rdkit"
+    "rdkit",
+    "numpy>=1.20.3,<2"
 ]
 test = [
     "bandit[toml]==1.7.10",
