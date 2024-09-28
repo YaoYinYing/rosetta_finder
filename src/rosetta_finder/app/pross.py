@@ -64,7 +64,7 @@ class PROSS:
             output_dir=refinement_dir,
             save_all_together=False,
             job_id="pross_refinement",
-            mpi_node=MPI_node(nproc=32),
+            mpi_node=MPI_node(),
         )
 
         with timing("PROSS: Refinement"):
