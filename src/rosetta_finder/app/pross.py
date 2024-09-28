@@ -3,8 +3,6 @@ from typing import List, Optional
 from dataclasses import dataclass
 import warnings
 from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
-from rosetta_finder.app import RosettaApplication
-from rosetta_finder.rosetta import IgnoreMissingFileWarning
 from rosetta_finder.utils import timing
 from rosetta_finder.app.utils import PDBProcessor
 
