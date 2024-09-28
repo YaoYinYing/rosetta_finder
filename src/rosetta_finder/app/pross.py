@@ -11,8 +11,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 @dataclass
 class PROSS(RosettaApplication):
-    pdb: str
-    pssm: str
+    pdb: str = ""
+    pssm: str = ""
 
     res_to_fix: str = "1A"
     res_to_restrict: str = "1A"

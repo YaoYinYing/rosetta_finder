@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
 from rosetta_finder.app import RosettaApplication
 from rosetta_finder.utils import timing
@@ -11,8 +11,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 @dataclass
 class RosettaLigand(RosettaApplication):
-    pdb: str
-    ligands: List[str]
+    pdb: str = ""
+    ligands: List[str] = field(default_factory=list)
 
     save_dir: str = "tests/outputs"
     job_id: str = "rosettaligand"
@@ -83,7 +83,7 @@ class RosettaLigand(RosettaApplication):
             output_dir=docking_dir,
             save_all_together=False,
             job_id=f"{self.instance}_{self.job_id}",
-            mpi_node=MPI_node(nproc=32),
+            # mpi_node=MPI_node(nproc=os.cpu_count()),
         )
 
         with timing("RosettaLigand: Docking"):

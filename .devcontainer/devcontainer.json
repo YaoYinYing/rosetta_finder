@@ -35,7 +35,8 @@
 				"ryanluker.vscode-coverage-gutters",
 				"bungcip.better-toml",
 				"GitHub.copilot",
-				"arianjamasb.protein-viewer"
+				"arianjamasb.protein-viewer",
+				"github.vscode-github-actions"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/local/bin/python",

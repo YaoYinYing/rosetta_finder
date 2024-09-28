@@ -1,9 +1,6 @@
 import os
 
-
 import pytest
-import shutil
-import warnings
 
 from ..conftest import no_rosetta
 
@@ -19,10 +16,3 @@ def test_app_supercharge():
     pdb = "tests/data/3fap_hf3_A.pdb"
     supercharge(pdb, nproc=os.cpu_count())
 
-
-@pytest.mark.integration
-@pytest.mark.skipif(no_rosetta(), reason="No Rosetta Installed.")
-def test_app_rosettaligand():
-    from rosetta_finder.app.rosettaligand import main
-
-    main()

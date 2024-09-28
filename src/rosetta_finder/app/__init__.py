@@ -1,11 +1,12 @@
+from dataclasses import dataclass
 import os
 from abc import ABC
 
 
-class RosettaApplication(ABC):
+@dataclass
+class RosettaApplication:
 
-    def __init__(self, job_id: str) -> None:
-        self.job_id = job_id
+    job_id: str
 
     def prepare(self):
         if hasattr(self, "pdb") and isinstance(self.pdb, str) and os.path.isfile(self.pdb):  # type:ignore
