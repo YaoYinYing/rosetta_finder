@@ -1,8 +1,10 @@
 import os
 from typing import List, Optional
 from dataclasses import dataclass, field
+import warnings
 from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
 from rosetta_finder.app import RosettaApplication
+from rosetta_finder.rosetta import IgnoreMissingFileWarning
 from rosetta_finder.utils import timing
 
 
@@ -49,7 +51,9 @@ class RosettaLigand(RosettaApplication):
     def opts_ligand(self) -> List[str]:
         ligands = []
         for i, l in enumerate(self.ligands):
-            if isinstance(l, str) and os.path.isfile(l) and l.endswith(".params"):
+            if isinstance(l, str) and l.endswith(".params"):
+                if not os.path.isfile(l):
+                    warnings.warn(IgnoreMissingFileWarning(f"Ignore Ligand - {l}"))
                 ligands.extend(["-extra_res_fa", os.path.abspath(l)])
         return ligands
 

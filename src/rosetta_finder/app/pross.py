@@ -234,8 +234,10 @@ class PROSS(RosettaApplication):
 
 
 def main():
-    pross = PROSS(pdb="tests/data/3fap_hf3_A.pdb", pssm="tests/data/3fap_hf3_A_ascii_mtx_file")
-    best_refined = pross.refine(30)
+    pross = PROSS(
+        pdb="tests/data/3fap_hf3_A_short.pdb", pssm="tests/data/3fap_hf3_A_ascii_mtx_file_short", job_id="pross_reduced"
+    )
+    best_refined = pross.refine(8)
 
     filters = pross.filterscan(best_refined)
     pross.design(filters=filters, refined_pdb=best_refined)

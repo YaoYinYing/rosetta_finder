@@ -27,6 +27,9 @@ class RosettaScriptVariableWarning(RuntimeWarning): ...
 class RosettaScriptVariableNotExistWarning(RosettaScriptVariableWarning): ...
 
 
+class IgnoreMissingFileWarning(UserWarning): ...
+
+
 @dataclass(frozen=True)
 class RosettaScriptsVariable:
     k: str
@@ -436,6 +439,7 @@ class Rosetta:
         if self.flags:
             for flag in self.flags:
                 if not os.path.isfile(flag):
+                    warnings.warn(IgnoreMissingFileWarning(f"Ignore Flag - {flag}"))
                     continue
                 cmd.append(f"@{os.path.abspath(flag)}")
 

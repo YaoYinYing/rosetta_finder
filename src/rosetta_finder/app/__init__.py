@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 import os
-from abc import ABC
+
+import warnings
+
+from rosetta_finder.rosetta import IgnoreMissingFileWarning
 
 
 @dataclass
@@ -9,7 +12,9 @@ class RosettaApplication:
     job_id: str
 
     def prepare(self):
-        if hasattr(self, "pdb") and isinstance(self.pdb, str) and os.path.isfile(self.pdb):  # type:ignore
+        if hasattr(self, "pdb") and isinstance(self.pdb, str):
+            if not os.path.isfile(self.pdb):  # type:ignore
+                warnings.warn(IgnoreMissingFileWarning(f"PDB is given yet not found - {self.pdb}"))
             self.instance = os.path.basename(self.pdb)[:-4]  # type:ignore
             self.pdb = os.path.abspath(self.pdb)  # type:ignore
 

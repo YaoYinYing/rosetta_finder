@@ -45,10 +45,10 @@ def supercharge(
             "-unmute",
             "protocols.design_opt.Supercharge",
             "-overwrite",
-            "-run:score_only"
+            "-run:score_only",
         ],
         save_all_together=True,
-        isolation=True
+        isolation=True,
     )
     instance = os.path.basename(pdb)[:-4]
 
@@ -58,7 +58,6 @@ def supercharge(
             for c in range(-abs_target_charge, abs_target_charge, 2)
         ]
     )
-
 
 
 def main():
