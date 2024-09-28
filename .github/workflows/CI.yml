@@ -20,10 +20,13 @@ jobs:
           - "3.11"
           - "3.12"
 
-    uses: microsoft/action-python/.github/workflows/validation.yml@0.7.3
+    uses: YaoYinYing/action-python/.github/workflows/validation.yml@v7.3.1-post-1
     with:
       workdir: '.'
       python-version: ${{ matrix.python }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+
 
   publish:
     strategy:

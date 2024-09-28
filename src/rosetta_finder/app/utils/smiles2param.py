@@ -131,6 +131,7 @@ class SmallMoleculeParamsGenerator:
 
 
     def __post_init__(self):
+        os.makedirs(self.save_dir, exist_ok=True)
         if isinstance(self.rosetta_bin, RosettaBinary):
             p=os.path.join(self.rosetta_bin.dirname, '../','scripts/python/public')
             if os.path.exists(p):
@@ -224,3 +225,7 @@ class SmallMoleculeParamsGenerator:
         subprocess.Popen(exe)
         print(exe)
         os.chdir(wd)
+
+
+def main():
+    SmallMoleculeParamsGenerator(save_dir='tests/outputs/ligands')
