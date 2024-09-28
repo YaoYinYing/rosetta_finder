@@ -49,10 +49,6 @@ jobs:
         run: |
             pytest tests/ -m 'integration'
 
-      - name: Convert coverage report to XML for codecov
-        run: |
-          coverage xml
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
