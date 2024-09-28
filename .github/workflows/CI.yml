@@ -20,7 +20,7 @@ jobs:
           - "3.11"
           - "3.12"
 
-    uses: YaoYinYing/action-python/.github/workflows/validation.yml@v7.3.1-post-1
+    uses: YaoYinYing/action-python/.github/workflows/validation.yml
     with:
       workdir: '.'
       python-version: ${{ matrix.python }}
@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    uses: microsoft/action-python/.github/workflows/publish.yml@0.7.3
+    uses: microsoft/action-python/.github/workflows/publish.yml@2f264485f12c1cc0b72a6fe24752b9ae9ba0b934
     secrets:
       PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       TEST_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD  }}
