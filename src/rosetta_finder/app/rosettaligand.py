@@ -12,7 +12,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 @dataclass
-class RosettaLigand(RosettaApplication):
+class RosettaLigand:
     pdb: str = ""
     ligands: List[str] = field(default_factory=list)
 
@@ -38,7 +38,14 @@ class RosettaLigand(RosettaApplication):
     cst_protocol = ""
 
     def __post_init__(self):
-        self.prepare()
+        if not os.path.isfile(self.pdb):
+            raise FileNotFoundError(f"PDB is given yet not found - {self.pdb}")
+        self.instance = os.path.basename(self.pdb)[:-4]
+        self.pdb = os.path.abspath(self.pdb)
+
+        os.makedirs(os.path.join(self.save_dir, self.job_id), exist_ok=True)
+        self.save_dir = os.path.abspath(self.save_dir)
+
         if all(isinstance(c, float) for c in [self.x_coords, self.y_coords, self.z_coords]):
             self.startfrom_mover = f'<StartFrom name="startfrom" chain="{self.chain_id_for_dock}"><Coordinates x="{self.x_coords}" y="{self.y_coords}" z="{self.z_coords}"/></StartFrom>'
             self.startfrom_protocol = '<Add mover_name="startfrom"/>'

@@ -1,8 +1,10 @@
 import os
 from typing import List, Optional
 from dataclasses import dataclass
+import warnings
 from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
 from rosetta_finder.app import RosettaApplication
+from rosetta_finder.rosetta import IgnoreMissingFileWarning
 from rosetta_finder.utils import timing
 from rosetta_finder.app.utils import PDBProcessor
 
@@ -10,7 +12,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 @dataclass
-class PROSS(RosettaApplication):
+class PROSS:
     pdb: str = ""
     pssm: str = ""
 
@@ -29,7 +31,14 @@ class PROSS(RosettaApplication):
     filter_thresholds = [0.5, -0.45, -0.75, -1, -1.25, -1.5, -1.8, -2]
 
     def __post_init__(self):
-        self.prepare()
+        if not os.path.isfile(self.pdb):
+            raise FileNotFoundError(f"PDB is given yet not found - {self.pdb}")
+
+        self.instance = os.path.basename(self.pdb)[:-4]
+        self.pdb = os.path.abspath(self.pdb)
+
+        os.makedirs(os.path.join(self.save_dir, self.job_id), exist_ok=True)
+        self.save_dir = os.path.abspath(self.save_dir)
 
         self.CA_constraints = os.path.join(self.save_dir, self.job_id, f"{self.instance}_bbCA.cst")
         self.seq_len = PDBProcessor.convert_pdb_to_constraints(self.pdb, self.CA_constraints)
