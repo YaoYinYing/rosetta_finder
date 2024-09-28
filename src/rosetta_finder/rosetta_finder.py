@@ -36,7 +36,9 @@ class RosettaBinary:
 
     dirname: str
     binary_name: str
-    mode: Optional[Literal["static", "mpi", "default", "cxx11threadserialization", "cxx11threadmpiserialization", None]] = None
+    mode: Optional[
+        Literal["static", "mpi", "default", "cxx11threadserialization", "cxx11threadmpiserialization", None]
+    ] = None
     os: Optional[Literal["linux", "macos", None]] = None
     compiler: Optional[Literal["gcc", "clang", None]] = None
     release: Optional[Literal["release", "debug", None]] = None
@@ -203,11 +205,10 @@ class RosettaFinder:
         Raises:
             FileNotFoundError: If the binary is not found.
         """
-        bin_in_path=shutil.which(binary_name)
+        bin_in_path = shutil.which(binary_name)
 
         if bin_in_path is not None:
             return RosettaBinary.from_filename(os.path.dirname(bin_in_path), os.path.basename(bin_in_path))
-
 
         pattern = self.build_regex_pattern(binary_name)
         for path in self.search_paths:

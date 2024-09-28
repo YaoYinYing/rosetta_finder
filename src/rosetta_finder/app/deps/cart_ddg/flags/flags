@@ -1,0 +1,17 @@
+-run:preserve_header
+
+#-extra_res_fa  ../HEM.fa.params
+#-extra_res_fa  ../CUX.fa.params
+#-in:file:s ../160_HEM_CUX_dualdock_1058_fix.pdb
+
+#-out:overwrite
+-packing
+  -use_input_sc
+  -ex1
+  -ex2
+-no_optH false
+-flip_HNQ
+-no_his_his_pairE
+
+#-nstruct 1
+-out:file:silent_struct_type binary

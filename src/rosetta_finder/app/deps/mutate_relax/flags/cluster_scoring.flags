@@ -1,0 +1,14 @@
+-out:overwrite
+-packing
+  -use_input_sc
+  -ex1
+  -ex2
+-no_optH false
+-flip_HNQ
+-no_his_his_pairE
+-no_nstruct_label true
+-preserve_header false
+-nstruct 1
+-out:file:score_only
+
+-mute all

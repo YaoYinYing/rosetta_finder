@@ -1,0 +1,8 @@
+-ddg::cartesian
+-ddg::dump_pdbs false
+-fa_max_dis 9.0
+-score:weights ref2015_cart
+-unmute all
+-ex1
+-ex2
+-ddg:bbnbrs 1

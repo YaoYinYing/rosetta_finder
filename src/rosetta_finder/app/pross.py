@@ -2,6 +2,7 @@ import os
 from typing import List, Optional
 from dataclasses import dataclass
 from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
+from rosetta_finder.app import RosettaApplication
 from rosetta_finder.utils import timing
 from rosetta_finder.app.utils import PDBProcessor
 
@@ -9,7 +10,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 @dataclass
-class PROSS:
+class PROSS(RosettaApplication):
     pdb: str
     pssm: str
 
@@ -28,8 +29,7 @@ class PROSS:
     filter_thresholds = [0.5, -0.45, -0.75, -1, -1.25, -1.5, -1.8, -2]
 
     def __post_init__(self):
-        self.instance = os.path.basename(self.pdb)[:-4]
-        os.makedirs(os.path.join(self.save_dir, self.job_id), exist_ok=True)
+        self.prepare()
 
         self.CA_constraints = os.path.join(self.save_dir, self.job_id, f"{self.instance}_bbCA.cst")
         self.seq_len = PDBProcessor.convert_pdb_to_constraints(self.pdb, self.CA_constraints)
@@ -39,10 +39,10 @@ class PROSS:
 
         rosetta = Rosetta(
             bin="rosetta_scripts",
-            flags=[os.path.join(script_dir, "deps/pross/flag/flags_nodelay")],
+            flags=[os.path.join(script_dir, "deps/pross/flags/flags_nodelay")],
             opts=[
                 "-parser:protocol",
-                f"{script_dir}/deps/pross/xml/refine.xml",
+                f"{script_dir}/deps/pross/xmls/refine.xml",
                 RosettaScriptsVariableGroup.from_dict(
                     {
                         "cst_value": "0.4",
@@ -90,7 +90,7 @@ class PROSS:
 
         rosetta = Rosetta(
             bin="rosetta_scripts",
-            flags=[os.path.join(script_dir, "deps/pross/flag/flags_nodelay")],
+            flags=[os.path.join(script_dir, "deps/pross/flags/flags_nodelay")],
             opts=[
                 "-in:file:s",
                 refined_pdb,
@@ -99,7 +99,7 @@ class PROSS:
                 "-out:path:all",
                 self.filterscan_dir,
                 "-parser:protocol",
-                f"{script_dir}/deps/pross/xml/filterscan_parallel.xml",
+                f"{script_dir}/deps/pross/xmls/filterscan_parallel.xml",
                 RosettaScriptsVariableGroup.from_dict(
                     {
                         "cst_value": "0.4",
@@ -184,13 +184,13 @@ class PROSS:
 
         rosetta = Rosetta(
             bin="rosetta_scripts",
-            flags=[os.path.join(script_dir, "deps/pross/flag/flags_nodelay")],
+            flags=[os.path.join(script_dir, "deps/pross/flags/flags_nodelay")],
             opts=[
                 "-in:file:s",
                 refined_pdb,
                 "-no_nstruct_label",
                 "-parser:protocol",
-                f"{script_dir}/deps/pross/xml/design_new.xml",
+                f"{script_dir}/deps/pross/xmls/design_new.xml",
                 RosettaScriptsVariableGroup.from_dict(
                     {
                         "cst_value": "0.4",
