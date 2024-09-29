@@ -131,10 +131,10 @@ class ScoreClusters:
         return mut_protocol
 
 
-def main():
+def main(num_mut:int=1):
     scorer = ScoreClusters(pdb="tests/data/1SUO.pdb", chain_id="A")
 
-    ret = scorer.run("tests/data/cluster/1SUO_A_1SUO.ent.mut_designs_1")
+    ret = scorer.run(f"tests/data/cluster/1SUO_A_1SUO.ent.mut_designs_{num_mut}")
 
     for i, r in enumerate(ret):
         top = r.best_decoy

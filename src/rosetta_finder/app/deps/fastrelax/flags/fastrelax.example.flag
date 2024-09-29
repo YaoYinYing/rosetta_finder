@@ -1,0 +1,24 @@
+# 脚本控制relax的选项，需要额外设定relax script
+-relax:script <file>               # 可自定义设置使用的relax script名称
+
+# 自由度控制
+-in:file:movemap <file>            # 可自定义设置movemap file文件，也可以用以下3个选项进行替代设置。
+-relax:jump_move true             # 是否允许能量最小化时，多肽链之间的相对移动？
+-relax:bb_move true              # 是否允许骨架二面角在能量最小化时变化？
+-relax:chi_move true              # 是否允许侧链二面角在能量最小化时变化？
+-relax:dualspace true              # 是否采用双空间法Relax?
+-relax::minimize_bond_angles       # dualspace推荐设置。
+
+# repack行为控制(默认是不可以repack成其他类型氨基酸)
+-relax:respect_resfile             # 设置refile文件，是的FastRelax过程中，可以进行突变设计。配合-packing:resfile使用，使用时关闭-relax:coord_constrain_sidechains。
+-packing:resfile <file>            # 输入自定义的resfile.
+#-disable_design false             # 可以通过全局控制，允许relax突变成20种氨基酸
+
+# 启用预设的限制方式:
+-relax:constrain_relax_to_start_coords  # 为骨架重原子添加坐标限制势，使其不偏离初始输入的结构(不能与-relax:constrain_relax_to_native_coords同时使用)
+-relax:constrain_relax_to_native_coords # 为骨架重原子添加坐标限制势，使其不偏对照/天然的结构(不能与-relax:constrain_relax_to_start_coords同时使用)
+-relax:coord_constrain_sidechains       # 是否也为侧链重原子添加坐标限制？(需要以上两个选项其中之一启用)
+-relax:coord_cst_stdev    <stdev>       # 设置坐标限制的强度，越小限制越强
+-relax:coord_cst_width    <width>       # 如果设置了，将启用flat-bottomed类型的限制函数。在<width>的范围内，收到的限制惩罚为0；
+-relax:sc_cst_maxdist   <dist>          # ？
+-relax:ramp_constraints   false         # 是否在模拟退火过程中，调整坐标限制的权重？
