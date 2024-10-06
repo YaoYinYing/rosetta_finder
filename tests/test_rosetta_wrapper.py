@@ -18,7 +18,7 @@ from RosettaPy.rosetta import (
     MPI_IncompatibleInputWarning,
 )
 from RosettaPy.utils import timing
-from RosettaPy.RosettaPy import RosettaFinder, RosettaBinary
+from RosettaPy import RosettaFinder, RosettaBinary
 
 from tests.conftest import github_rosetta_test
 
