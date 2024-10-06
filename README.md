@@ -1,16 +1,18 @@
-# RosettaFinder
+# RosettaPy
 
-A Python utility for finding Rosetta binaries based on a specific naming convention.
+A Python utility for wrapping Rosetta command line tools.
 
 ![GitHub License](https://img.shields.io/github/license/YaoYinYing/RosettaPy)
 
-
 ## CI Status
+
 [![Python CI](https://github.com/YaoYinYing/RosettaPy/actions/workflows/CI.yml/badge.svg)](https://github.com/YaoYinYing/RosettaPy/actions/workflows/CI.yml)
+[![Test with Rosetta](https://github.com/YaoYinYing/RosettaPy/actions/workflows/RosettaCI.yml/badge.svg)](https://github.com/YaoYinYing/RosettaPy/actions/workflows/RosettaCI.yml)
 [![Dependabot Updates](https://github.com/YaoYinYing/RosettaPy/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/YaoYinYing/RosettaPy/actions/workflows/dependabot/dependabot-updates)
 [![codecov](https://codecov.io/gh/YaoYinYing/RosettaPy/branch/main/graph/badge.svg?token=epCTnx8SXj)](https://codecov.io/gh/YaoYinYing/RosettaPy)
 
 ## Release
+
 ![GitHub Release](https://img.shields.io/github/v/release/YaoYinYing/RosettaPy)
 ![GitHub Release Date](https://img.shields.io/github/release-date/YaoYinYing/RosettaPy)
 
@@ -19,21 +21,27 @@ A Python utility for finding Rosetta binaries based on a specific naming convent
 ![PyPI - Status](https://img.shields.io/pypi/status/RosettaPy)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/RosettaPy)
 
-
 ## Python version supported
+
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/RosettaPy)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/RosettaPy)
 
-
-
-
 ## Overview
 
-`RosettaFinder` is a Python module designed to locate Rosetta biomolecular modeling suite binaries that follow a specific naming pattern. It searches predefined directories and can handle custom search paths. The module includes:
+`RosettaPy` is a Python module designed to locate Rosetta biomolecular modeling suite binaries that follow a specific naming pattern and execute Rosetta in command line. The module includes:
 
 - An object-oriented `RosettaFinder` class to search for binaries.
 - A `RosettaBinary` dataclass to represent the binary and its attributes.
-- A command-line shortcut for quick access to Rosetta binaries.
+- A command-line wrapper dataclass `Rosetta` for handling Rosetta runs.
+- A `RosettaScriptsVariableGroup` dataclass to represent Rosetta scripts variables.
+- A simplified result analyzer `RosettaEnergyUnitAnalyser` to read and interpret Rosetta output score files.
+- A series of example applications that follow the design elements and patterns described above.
+  - PROSS
+  - FastRelax
+  - RosettaLigand
+  - Supercharge
+  - MutateRelax
+  - Cartesian ddG (on the way)
 - Unit tests to ensure reliability and correctness.
 
 ## Features
@@ -50,18 +58,19 @@ A Python utility for finding Rosetta binaries based on a specific naming convent
 
 The binaries are expected to follow this naming pattern:
 
-```
-rosetta_scripts[.mode].oscompilerrelease
+```text
+rosetta_scripts[[.mode].oscompilerrelease]
 ```
 
 - **Binary Name**: `rosetta_scripts` (default) or specified.
 - **Mode** (optional): `default`, `mpi`, or `static`.
-- **OS**: `linux` or `macos`.
-- **Compiler**: `gcc` or `clang`.
-- **Release**: `release` or `debug`.
+- **OS** (optional): `linux` or `macos`.
+- **Compiler** (optional): `gcc` or `clang`.
+- **Release** (optional): `release` or `debug`.
 
 Examples of valid binary filenames:
 
+- `rosetta_scripts` (dockerized Rosetta)
 - `rosetta_scripts.linuxgccrelease`
 - `rosetta_scripts.mpi.macosclangdebug`
 - `rosetta_scripts.static.linuxgccrelease`
@@ -77,8 +86,6 @@ You can install `RosettaPy` directly from PyPI:
 ```bash
 pip install RosettaPy -U
 ```
-
-This allows you to use `RosettaPy` without cloning the repository.
 
 ## Usage
 
@@ -131,112 +138,75 @@ print(f"Release: {rosetta_binary.release}")
 print(f"Full Path: {rosetta_binary.full_path}")
 ```
 
-### Example Output
+### Wrapping the Rosetta
 
-```
-Binary Name: rosetta_scripts
-Mode: mpi
-OS: linux
-Compiler: gcc
-Release: release
-Full Path: /custom/path/to/rosetta/bin/rosetta_scripts.mpi.linuxgccrelease
+```python
+
+# Create a Rosetta object with the desired parameters
+rosetta = Rosetta(
+    bin="rosetta_scripts",
+    flags=[...],
+    opts=[
+        "-in:file:s", os.path.abspath(pdb),
+        "-parser:protocol", "/path/to/my_rosetta_scripts.xml",
+    ],
+    output_dir=...,
+    save_all_together=True,
+    job_id=...,
+)
+
+# Create tasks for each variant
+tasks = [
+    {
+        "rsv": RosettaScriptsVariableGroup.from_dict(
+            {
+                "var1": ...,
+                "var2": ...,
+                "var3": ...,
+            }
+        ),
+        "-out:file:scorefile": f"{variant}.sc",
+        "-out:prefix": f"{variant}.",
+    }
+    for variant in variants
+]
+
+# Run the Rosetta tasks
+rosetta.run(inputs=tasks)
+
+# Analyze the results
+analyser = RosettaEnergyUnitAnalyser(score_file=rosetta.output_scorefile_dir)
+best_hit = analyser.best_decoy
+pdb_path = os.path.join(rosetta.output_pdb_dir, f'{best_hit["decoy"]}.pdb')
+
+print("Analysis of the best decoy:")
+print("-" * 79)
+print(analyser.df.sort_values(by=analyser.score_term))
+
+print("-" * 79)
+
+print(f'Best Hit on this Rosetta run: {best_hit["decoy"]} - {best_hit["score"]}: {pdb_path}')
+#
 ```
 
 ## Environment Variables
 
 The `RosettaFinder` searches the following directories by default:
 
+0. `PATH`, which is commonly used in dockerized Rosetta image.
 1. The path specified in the `ROSETTA_BIN` environment variable.
 2. `ROSETTA3/bin`
 3. `ROSETTA/main/source/bin/`
 4. A custom search path provided during initialization.
 
-Set the `ROSETTA_BIN` environment variable to include your custom binary directory:
-
-```bash
-export ROSETTA_BIN=/path/to/your/rosetta/bin
-```
-
-## API Reference
-
-### `whichrosetta` Command
-
-The `whichrosetta` command is installed as part of the `RosettaPy` package and allows you to find the path to a Rosetta binary from the command line.
-
-**Usage:**
-
-```bash
-whichrosetta <binary_name>
-```
-
-- `binary_name`: The name of the Rosetta binary you want to locate (e.g., `relax`, `rosetta_scripts`).
-
-**Example:**
-
-```bash
-relax_bin=$(whichrosetta relax)
-echo $relax_bin
-```
-
-This command finds the `relax` binary and prints its full path.
-
-### `RosettaFinder` Class
-
-- **Initialization**
-
-  ```python
-  RosettaFinder(search_path=None)
-  ```
-
-  - `search_path` (optional): A custom directory to include in the search paths.
-
-- **Methods**
-
-  - `find_binary(binary_name='rosetta_scripts')`
-
-    Searches for the specified binary and returns a `RosettaBinary` instance.
-
-    - `binary_name` (optional): Name of the binary to search for.
-
-    - **Raises**:
-      - `FileNotFoundError`: If the binary is not found.
-      - `EnvironmentError`: If the OS is not Linux or macOS.
-
-### `RosettaBinary` Dataclass
-
-- **Attributes**
-
-  - `dirname`: Directory where the binary is located.
-  - `binary_name`: Base name of the binary.
-  - `mode`: Build mode (`static`, `mpi`, `default`, or `None`).
-  - `os`: Operating system (`linux` or `macos`).
-  - `compiler`: Compiler used (`gcc` or `clang`).
-  - `release`: Build type (`release` or `debug`).
-
-- **Properties**
-
-  - `filename`: Reconstructed filename based on the attributes.
-  - `full_path`: Full path to the binary executable.
-
-- **Class Methods**
-
-  - `from_filename(dirname: str, filename: str)`
-
-    Creates an instance by parsing the filename.
-
-    - **Raises**:
-      - `ValueError`: If the filename does not match the expected pattern.
-
 ## Running Tests
 
-The project includes unit tests using Python's `unittest` framework.
-
-### Running Tests
+The project includes unit tests using Python's `pytest` framework.
 
 1. Clone the repository (if not already done):
 
    ```bash
-   git clone https://github.com/yourusername/RosettaPy.git
+   git clone https://github.com/YaoYinYing/RosettaPy.git
    cd RosettaPy
    ```
 
@@ -249,16 +219,8 @@ The project includes unit tests using Python's `unittest` framework.
 3. Run the tests:
 
    ```bash
-   python -m unittest discover tests
+   python -m pytest ./tests
    ```
-
-### Test Coverage
-
-The tests cover:
-
-- Parsing valid and invalid filenames with `RosettaBinary`.
-- Finding binaries with `RosettaFinder`, including scenarios where binaries are found or not found.
-- OS compatibility checks.
 
 ## Contributing
 
