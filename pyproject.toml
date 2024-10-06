@@ -3,7 +3,7 @@ requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name =  "rosetta_finder"
+name =  "RosettaPy"
 authors = [
     {name = "Yinying Yao", email = "yaoyy.hi@gmail.com"},
 ]
@@ -57,17 +57,17 @@ test = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/YaoYinYing/rosetta_finder/tree/main#readme"
-Source = "https://github.com/YaoYinYing/rosetta_finder"
-Tracker = "https://github.com/YaoYinYing/rosetta_finder/issues"
+Documentation = "https://github.com/YaoYinYing/RosettaPy/tree/main#readme"
+Source = "https://github.com/YaoYinYing/RosettaPy"
+Tracker = "https://github.com/YaoYinYing/RosettaPy/issues"
 
 
 [project.scripts]
-whichrosetta = "rosetta_finder:main"
+whichrosetta = "RosettaPy:main"
 
 
 [tool.flit.module]
-name = "rosetta_finder"
+name = "RosettaPy"
 
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]

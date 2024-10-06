@@ -9,7 +9,7 @@ import warnings
 import pytest
 
 # Import the classes from your module
-from rosetta_finder.rosetta import (
+from RosettaPy.rosetta import (
     RosettaCmdTask,
     RosettaScriptsVariable,
     RosettaScriptsVariableGroup,
@@ -17,8 +17,8 @@ from rosetta_finder.rosetta import (
     Rosetta,
     MPI_IncompatibleInputWarning,
 )
-from rosetta_finder.utils import timing
-from rosetta_finder.rosetta_finder import RosettaFinder, RosettaBinary
+from RosettaPy.utils import timing
+from RosettaPy.RosettaPy import RosettaFinder, RosettaBinary
 
 from tests.conftest import github_rosetta_test
 

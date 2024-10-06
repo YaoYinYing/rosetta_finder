@@ -2,7 +2,7 @@ import os
 import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
-from rosetta_finder import RosettaEnergyUnitAnalyser  # Replace with the actual module name
+from RosettaPy import RosettaEnergyUnitAnalyser  # Replace with the actual module name
 
 
 sample_score_file = "tests/data/score.sc"

@@ -1,7 +1,7 @@
 import pytest
 
 
-from rosetta_finder.app.utils.smiles2param import deprotonate_acids, generate_molecule, get_conformers, protonate_tertiary_amine
+from RosettaPy.app.utils.smiles2param import deprotonate_acids, generate_molecule, get_conformers, protonate_tertiary_amine
 
 
 # Test case for deprotonate_acids

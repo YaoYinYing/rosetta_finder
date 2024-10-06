@@ -2,9 +2,9 @@ import os
 from typing import List, Optional
 from dataclasses import dataclass, field
 import warnings
-from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
-from rosetta_finder.rosetta import IgnoreMissingFileWarning
-from rosetta_finder.utils import timing
+from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
+from RosettaPy.rosetta import IgnoreMissingFileWarning
+from RosettaPy.utils import timing
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))

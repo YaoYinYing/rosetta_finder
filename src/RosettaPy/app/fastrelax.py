@@ -6,8 +6,8 @@ import warnings
 from Bio.Data import IUPACData
 from Bio.SeqIO import parse
 
-from rosetta_finder import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
-from rosetta_finder.utils import timing
+from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
+from RosettaPy.utils import timing
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))

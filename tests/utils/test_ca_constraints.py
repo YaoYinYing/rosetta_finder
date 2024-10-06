@@ -1,7 +1,7 @@
 import pytest
 from io import StringIO
 
-from rosetta_finder.app.utils import PDBProcessor
+from RosettaPy.app.utils import PDBProcessor
 
 @pytest.fixture
 def sample_pdb_lines():

@@ -2,27 +2,27 @@
 
 A Python utility for finding Rosetta binaries based on a specific naming convention.
 
-![GitHub License](https://img.shields.io/github/license/YaoYinYing/rosetta_finder)
+![GitHub License](https://img.shields.io/github/license/YaoYinYing/RosettaPy)
 
 
 ## CI Status
-[![Python CI](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/CI.yml)
-[![Dependabot Updates](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/YaoYinYing/rosetta_finder/actions/workflows/dependabot/dependabot-updates)
-[![codecov](https://codecov.io/gh/YaoYinYing/rosetta_finder/branch/main/graph/badge.svg?token=epCTnx8SXj)](https://codecov.io/gh/YaoYinYing/rosetta_finder)
+[![Python CI](https://github.com/YaoYinYing/RosettaPy/actions/workflows/CI.yml/badge.svg)](https://github.com/YaoYinYing/RosettaPy/actions/workflows/CI.yml)
+[![Dependabot Updates](https://github.com/YaoYinYing/RosettaPy/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/YaoYinYing/RosettaPy/actions/workflows/dependabot/dependabot-updates)
+[![codecov](https://codecov.io/gh/YaoYinYing/RosettaPy/branch/main/graph/badge.svg?token=epCTnx8SXj)](https://codecov.io/gh/YaoYinYing/RosettaPy)
 
 ## Release
-![GitHub Release](https://img.shields.io/github/v/release/YaoYinYing/rosetta_finder)
-![GitHub Release Date](https://img.shields.io/github/release-date/YaoYinYing/rosetta_finder)
+![GitHub Release](https://img.shields.io/github/v/release/YaoYinYing/RosettaPy)
+![GitHub Release Date](https://img.shields.io/github/release-date/YaoYinYing/RosettaPy)
 
-![PyPI - Format](https://img.shields.io/pypi/format/rosetta_finder)
-![PyPI - Version](https://img.shields.io/pypi/v/rosetta_finder)
-![PyPI - Status](https://img.shields.io/pypi/status/rosetta_finder)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/rosetta_finder)
+![PyPI - Format](https://img.shields.io/pypi/format/RosettaPy)
+![PyPI - Version](https://img.shields.io/pypi/v/RosettaPy)
+![PyPI - Status](https://img.shields.io/pypi/status/RosettaPy)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/RosettaPy)
 
 
 ## Python version supported
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rosetta_finder)
-![PyPI - Implementation](https://img.shields.io/pypi/implementation/rosetta_finder)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/RosettaPy)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/RosettaPy)
 
 
 
@@ -72,23 +72,23 @@ Ensure you have Python 3.6 or higher installed.
 
 ### Install via PyPI
 
-You can install `rosetta_finder` directly from PyPI:
+You can install `RosettaPy` directly from PyPI:
 
 ```bash
-pip install rosetta_finder -U
+pip install RosettaPy -U
 ```
 
-This allows you to use `rosetta_finder` without cloning the repository.
+This allows you to use `RosettaPy` without cloning the repository.
 
 ## Usage
 
 ### Command-Line Shortcut
 
-`rosetta_finder` provides a command-line shortcut to quickly locate Rosetta binaries.
+`RosettaPy` provides a command-line shortcut to quickly locate Rosetta binaries.
 
 #### Using the `whichrosetta` Command
 
-After installing `rosetta_finder`, you can use the `whichrosetta` command in your terminal.
+After installing `RosettaPy`, you can use the `whichrosetta` command in your terminal.
 
 ```bash
 whichrosetta <binary_name>
@@ -107,10 +107,10 @@ This command assigns the full path of the `relax` binary to the `relax_bin` vari
 
 ### Importing the Module
 
-You can also use `rosetta_finder` in your Python scripts.
+You can also use `RosettaPy` in your Python scripts.
 
 ```python
-from rosetta_finder import RosettaFinder, RosettaBinary
+from RosettaPy import RosettaFinder, RosettaBinary
 ```
 
 ### Finding a Rosetta Binary in Python
@@ -161,7 +161,7 @@ export ROSETTA_BIN=/path/to/your/rosetta/bin
 
 ### `whichrosetta` Command
 
-The `whichrosetta` command is installed as part of the `rosetta_finder` package and allows you to find the path to a Rosetta binary from the command line.
+The `whichrosetta` command is installed as part of the `RosettaPy` package and allows you to find the path to a Rosetta binary from the command line.
 
 **Usage:**
 
@@ -236,14 +236,14 @@ The project includes unit tests using Python's `unittest` framework.
 1. Clone the repository (if not already done):
 
    ```bash
-   git clone https://github.com/yourusername/rosetta_finder.git
-   cd rosetta_finder
+   git clone https://github.com/yourusername/RosettaPy.git
+   cd RosettaPy
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd rosetta_finder
+   cd RosettaPy
    ```
 
 3. Run the tests:

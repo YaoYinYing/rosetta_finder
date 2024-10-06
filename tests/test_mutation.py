@@ -1,5 +1,5 @@
 import pytest
-from rosetta_finder.common import Mutation, ProteinSequence, Chain, Mutant
+from RosettaPy.common import Mutation, ProteinSequence, Chain, Mutant
 
 
 # Test cases for the Mutation class

@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/RosettaCI.yml' # monitor the main workflow script.
-      - 'src/rosetta_finder/app/*'
-      - 'tests/cases/*'
+      - ".github/workflows/RosettaCI.yml" # monitor the main workflow script.
+      - "src/RosettaPy/app/*"
+      - "tests/cases/*"
 
     branches:
-        - main
+      - main
 
 env:
   conda_env: PROSS
   ROSETTA_BIN: /usr/local/bin/
-  GITHUB_ROSETTA_TEST: 'YES'
+  GITHUB_ROSETTA_TEST: "YES"
 
 jobs:
   RosettaTests:
@@ -32,7 +32,6 @@ jobs:
     container:
       image: rosettacommons/rosetta:mpi
 
-
     defaults:
       run:
         shell: bash -el {0}
@@ -41,7 +40,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup rosetta_finder on ${{ matrix.os }}
+      - name: Setup RosettaPy on ${{ matrix.os }}
         run: |
           apt update -y
           apt install gnupg2 git -y
@@ -49,7 +48,7 @@ jobs:
 
       - name: Run test cases
         run: |
-            pytest tests/ -m 'integration'
+          pytest tests/ -m 'integration'
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4

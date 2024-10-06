@@ -4,7 +4,7 @@ import tempfile
 import shutil
 from contextlib import contextmanager
 
-from rosetta_finder.utils import isolate
+from RosettaPy.utils import isolate
 
 def test_isolate_creates_and_moves_files(tmp_path):
     """Test that files created in the isolated environment are moved to the target directory."""

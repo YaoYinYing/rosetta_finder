@@ -3,7 +3,7 @@ import os
 
 import warnings
 
-from rosetta_finder.rosetta import IgnoreMissingFileWarning
+from RosettaPy.rosetta import IgnoreMissingFileWarning
 
 
 from .supercharge import supercharge

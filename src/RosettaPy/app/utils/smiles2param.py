@@ -25,7 +25,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem.Fingerprints import FingerprintMols
-from rosetta_finder import RosettaBinary
+from RosettaPy import RosettaBinary
 
 
 # Functions

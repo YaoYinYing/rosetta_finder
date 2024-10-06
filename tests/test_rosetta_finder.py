@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from rosetta_finder import RosettaFinder, RosettaBinary
+from RosettaPy import RosettaFinder, RosettaBinary
 from tests.conftest import github_rosetta_test
 
 

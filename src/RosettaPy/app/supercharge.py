@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
-from rosetta_finder import Rosetta
-from rosetta_finder.rosetta import RosettaCmdTask
+from RosettaPy import Rosetta
+from RosettaPy.rosetta import RosettaCmdTask
 
 
 def supercharge(
