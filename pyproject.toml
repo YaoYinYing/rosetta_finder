@@ -35,7 +35,7 @@ wrapper = [
     "pandas",
     "biopython",
     "rdkit",
-    "numpy>=1.20.3,<2"
+    "numpy>=1.20.3,<3"
 ]
 test = [
     "bandit[toml]==1.7.10",
