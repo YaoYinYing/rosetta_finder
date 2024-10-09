@@ -83,7 +83,7 @@ Examples of valid binary filenames:
 
 ## Installation
 
-Ensure you have Python 3.6 or higher installed.
+Ensure you have Python 3.8 or higher installed.
 
 ### Install via PyPI
 

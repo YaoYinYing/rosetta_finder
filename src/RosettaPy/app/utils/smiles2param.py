@@ -160,7 +160,7 @@ class SmallMoleculeParamsGenerator:
             try:
                 cs = Chem.CanonSmiles(ds)
                 c_smiles.append(cs)
-            except:
+            except Exception:
                 print('Invalid SMILES: %s\n%s' % (i, ds))
         print(c_smiles)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from .rosetta_finder import RosettaBinary, RosettaFinder, main
-from .rosetta import Rosetta, RosettaScriptsVariableGroup, MPI_node, RosettaEnergyUnitAnalyser
+from .rosetta import Rosetta, RosettaScriptsVariableGroup, MPI_node
+from .analyser import RosettaEnergyUnitAnalyser
 from .utils import timing, isolate
 
 __all__ = [
@@ -15,4 +16,4 @@ __all__ = [
     "RosettaEnergyUnitAnalyser",
 ]
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

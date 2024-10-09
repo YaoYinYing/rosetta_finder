@@ -9,16 +9,16 @@ ENV https_proxy=http://a100-internal.yaoyy.moe:10089
 ENV all_proxy=http://a100-internal.yaoyy.moe:10089
 ENV GITHUB_ROSETTA_TEST=YES
 
-RUN apt update -y && apt install git curl wget -y
+RUN apt-get update -y && apt-get install git curl wget -y
 
 RUN python -m pip config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
-    && python -m pip install --upgrade pip \
-    && python -m pip install 'flit>=3.8.0'
+    && python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir 'flit>=3.8.0'
 
 ENV FLIT_ROOT_INSTALL=1
 
 COPY pyproject.toml .
 RUN touch README.md \
     && mkdir -p src/RosettaPy \
-    && python -m flit install --only-deps --deps develop \
+    && python -m flit install --no-cache-dir --only-deps --deps develop \
     && rm -r pyproject.toml README.md src

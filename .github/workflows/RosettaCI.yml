@@ -44,7 +44,7 @@ jobs:
         run: |
           apt update -y
           apt install gnupg2 git -y
-          pip install '.[test,wrapper]' -U
+          pip install '.[test]' -U
 
       - name: Run test cases
         run: |
