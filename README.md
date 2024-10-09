@@ -147,6 +147,8 @@ print(f"Full Path: {rosetta_binary.full_path}")
 ### Wrapping the Rosetta
 
 ```python
+# Imports
+from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser,
 
 # Create a Rosetta object with the desired parameters
 rosetta = Rosetta(
@@ -161,8 +163,8 @@ rosetta = Rosetta(
     job_id=...,
 )
 
-# Create tasks for each variant
-tasks = [
+# Run with the Rosetta tasks
+tasks = [ # Create tasks for each variant
     {
         "rsv": RosettaScriptsVariableGroup.from_dict(
             {
@@ -177,8 +179,12 @@ tasks = [
     for variant in variants
 ]
 
-# Run the Rosetta tasks
+# Run the tasks
 rosetta.run(inputs=tasks)
+
+# Or create a distributed runs with structure labels (-nstruct)
+options=[...] # Passing an optional list of options that will be used to all structure models
+rosetta.run(nstruct=nstruct, inputs=options)
 
 # Analyze the results
 analyser = RosettaEnergyUnitAnalyser(score_file=rosetta.output_scorefile_dir)
@@ -191,7 +197,7 @@ print(analyser.df.sort_values(by=analyser.score_term))
 
 print("-" * 79)
 
-print(f'Best Hit on this Rosetta run: {best_hit["decoy"]} - {best_hit["score"]}: {pdb_path}')
+print(f'Best Hit on this run: {best_hit["decoy"]} - {best_hit["score"]}: {pdb_path}')
 #
 ```
 
