@@ -97,7 +97,7 @@ class RosettaPyProteinSequence:
         structure = strucio.load_structure(pdb_file, model=1)
 
         chains = []
-        unique_chains = np.unique(structure.chain_id)  # Use numpy.unique() instead of .unique() on the array
+        unique_chains = np.unique(structure.chain_id)  # type: ignore # Use numpy.unique() instead of .unique() on the array
         for chain_id in unique_chains:
             # Get atoms from the current chain
             chain_atoms = structure[structure.chain_id == chain_id]
@@ -160,7 +160,7 @@ class Mutant:
     _mutant_id: str = ""
     _wt_score: float = 0.0
 
-    def get_mutated_chain(self, chain_id) -> Chain:
+    def get_mutated_chain(self, chain_id) -> str:
         """
         Returns the mutated chain with the given chain_id.
         """
@@ -289,9 +289,10 @@ class Mutant:
 
 def mutants2mutfile(mutants: List[Mutant], file_path: str) -> str:
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    as_mutfile = "\n".join(mutant.as_mutfile for mutant in mutants)
+    mutants_dict = {m.raw_mutant_id: m for m in mutants}
+    as_mutfile = "\n".join(mutant.as_mutfile for _, mutant in mutants_dict.items())
 
-    mutfile_content = f"total {len([_m for m in mutants for _m in m.mutations])}\n{as_mutfile}"
+    mutfile_content = f"total {len([_m for m in mutants_dict.values() for _m in m.mutations])}\n{as_mutfile}"
     with open(file_path, "w") as file:
         file.write(mutfile_content)
     return mutfile_content
@@ -304,8 +305,6 @@ def main():
 
 
 if __name__ == "__main__":
-    wt = RosettaPyProteinSequence.from_pdb(
-        "/Users/yyy/Documents/protein_design/rosetta_finder/tests/data/3fap_hf3_A_short.pdb"
-    )
+    wt = RosettaPyProteinSequence.from_pdb("tests/data/3fap_hf3_A_short.pdb")
     print(f"3fap_hf3_A_short.pdb: {str(wt.chains[0].sequence)}")
     main()
