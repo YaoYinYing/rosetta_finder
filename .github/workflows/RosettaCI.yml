@@ -42,8 +42,8 @@ jobs:
 
       - name: Setup RosettaPy on ${{ matrix.os }}
         run: |
-          apt update -y
-          apt install gnupg2 git -y
+          apt-get update -y
+          apt-get install build-essential gnupg2 git -y
           pip install '.[test]' -U
 
       - name: Run test cases
