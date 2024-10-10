@@ -100,11 +100,24 @@ class RosettaPyProteinSequence:
         unique_chains = np.unique(structure.chain_id)  # type: ignore # Use numpy.unique() instead of .unique() on the array
         for chain_id in unique_chains:
             # Get atoms from the current chain
-            chain_atoms = structure[structure.chain_id == chain_id]
+            chain_atoms = structure[structure.chain_id == chain_id]  # type: ignore
 
             # Convert the chain atoms to a sequence of amino acids
-            sequence, chain_starts = struc.to_sequence(chain_atoms)
-            sequence = str(sequence[0])
+            if hasattr(struc, "to_sequence"):  # Biotite v1.0.1
+                sequence, chain_starts = struc.to_sequence(chain_atoms)  # type: ignore
+                sequence = str(sequence[0])
+            else:
+                import biotite
+                import biotite.structure.residues as res
+                from Bio.Data import IUPACData
+
+                warnings.warn(DeprecationWarning(f"Detected Biotite v{biotite.__version__}."))
+
+                # Get residue codes for the current chain
+                residue_ids = res.get_residues(chain_atoms)[1]  # Get residue indices
+
+                # Convert the ProteinSequence to a string of one-letter codes
+                sequence = "".join([IUPACData.protein_letters_3to1[str(resn).title()] for resn in residue_ids])
 
             # Add the chain to the ProteinSequence
             chains.append(Chain(chain_id=str(chain_id), sequence=str(sequence)))
