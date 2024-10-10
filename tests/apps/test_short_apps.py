@@ -39,3 +39,11 @@ def test_app_fastrelax(dualspace):
     from RosettaPy.app.fastrelax import main
 
     main(dualspace)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(no_rosetta(), reason="No Rosetta Installed.")
+def test_app_cart_ddg():
+    from RosettaPy.app.cart_ddg import main
+
+    main()
