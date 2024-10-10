@@ -1,7 +1,6 @@
 import os
 from typing import List, Optional
 from dataclasses import dataclass
-import warnings
 from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
 from RosettaPy.utils import timing
 from RosettaPy.app.utils import PDBProcessor

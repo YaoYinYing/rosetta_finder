@@ -2,7 +2,6 @@ import os
 import sys
 import re
 from pathlib import Path
-import re
 import shutil
 from dataclasses import dataclass
 from typing import Optional, Literal
@@ -223,7 +222,7 @@ class RosettaFinder:
                     rosetta_binary = RosettaBinary.from_filename(str(path), file.name)
                     if rosetta_binary.binary_name == binary_name:
                         return rosetta_binary
-                except ValueError as e:
+                except ValueError:
                     continue
 
         raise FileNotFoundError(f"{binary_name} binary not found in the specified paths.")
@@ -236,7 +235,6 @@ def main() -> None:
     Returns:
         None
     """
-    import shutil
 
     bin_str = sys.argv[1]
     bin_path = sys.argv[2] if len(sys.argv) > 2 else None

@@ -108,7 +108,7 @@ class RosettaEnergyUnitAnalyser:
         - Tuple[Dict[Literal["score", "decoy"], Union[str, float]]]: Tuple of dictionaries containing scores and decoys of the top entries.
         """
         if rank <= 0:
-            raise ValueError(f"Rank must be greater than 0")
+            raise ValueError("Rank must be greater than 0")
 
         # Override score_term if provided
         score_term = score_term if score_term is not None and score_term in self.df.columns else self.score_term

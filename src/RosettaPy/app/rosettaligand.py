@@ -2,7 +2,7 @@ import os
 from typing import List, Optional
 from dataclasses import dataclass, field
 import warnings
-from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
+from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser
 from RosettaPy.rosetta import IgnoreMissingFileWarning
 from RosettaPy.utils import timing
 

@@ -1,4 +1,4 @@
-from .mutation import Mutation, Mutant, ProteinSequence, Chain
+from .mutation import Mutation, Mutant, RosettaPyProteinSequence, Chain, mutants2mutfile
 
 
-__all__ = ["Mutation", "Chain", "Mutant", "ProteinSequence"]
+__all__ = ["Mutation", "Chain", "Mutant", "RosettaPyProteinSequence", "mutants2mutfile"]

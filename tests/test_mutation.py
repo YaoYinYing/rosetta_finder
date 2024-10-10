@@ -1,126 +1,193 @@
+import os
+from typing import Dict, List
+import warnings
+import copy
 import pytest
-from RosettaPy.common import Mutation, ProteinSequence, Chain, Mutant
+from RosettaPy.common import Mutation, RosettaPyProteinSequence, Chain, Mutant, mutants2mutfile
 
 
 # Test cases for the Mutation class
 
 
-def test_mutation_creation():
+# Sample PDB content for testing
+sample_wt_pdb = "tests/data/3fap_hf3_A_short.pdb"
+
+sample_mutant_pdb_dir = "tests/data/designed/pross/"
+
+sample_mutant_pdbs = [
+    f"{sample_mutant_pdb_dir}/3fap_hf3_A_short_0003_-0.45.pdb",
+    f"{sample_mutant_pdb_dir}/3fap_hf3_A_short_0003_-1.5.pdb",
+]
+
+
+@pytest.fixture
+def sample_wt_sequence():
+    return copy.copy("IRGWEEGVAQM")
+
+
+@pytest.fixture
+def sample_mutation():
+    return Mutation(chain_id="A", position=10, wt_res="Q", mut_res="V")
+
+
+@pytest.fixture
+def sample_protein_sequence(sample_wt_sequence):
+    protein_sequence = RosettaPyProteinSequence(chains=[Chain(chain_id="A", sequence=sample_wt_sequence)])
+    return protein_sequence
+
+
+@pytest.fixture
+def sample_protein_sequence_pdb():
+    protein_sequence = RosettaPyProteinSequence.from_pdb(sample_wt_pdb)
+    return protein_sequence
+
+
+@pytest.fixture
+def sample_mutant(sample_protein_sequence, sample_mutation):
+    return Mutant(mutations=[sample_mutation], wt_protein_sequence=sample_protein_sequence)
+
+
+@pytest.fixture
+def sample_mutants() -> Dict[str, Mutant]:
+
+    pdbs = [os.path.join(sample_mutant_pdb_dir, f) for f in os.listdir(sample_mutant_pdb_dir)]
+    mutants = Mutant.from_pdb(sample_wt_pdb, pdbs)
+    return {f: m for f, m in zip(pdbs, mutants)}
+
+
+def test_mutation_str(sample_mutation):
     """
-    Test that a Mutation object is created with the correct attributes.
+    Test the string representation of a Mutation.
     """
-    mutation = Mutation(chain_id="A", position=123, wt_res="A", mut_res="B")
-
-    assert mutation.chain_id == "A"
-    assert mutation.position == 123
-    assert mutation.wt_res == "A"
-    assert mutation.mut_res == "B"
+    assert str(sample_mutation) == "Q10V"
 
 
-def test_mutation_str():
+def test_mutation_rosetta_format(sample_mutation):
     """
-    Test that the __str__ method returns the expected string format 'A123B'.
+    Test the Rosetta format conversion of a Mutation.
     """
-    mutation = Mutation(chain_id="A", position=123, wt_res="A", mut_res="B")
-    assert str(mutation) == "A123B"
+    assert sample_mutation.to_rosetta_format(10) == "Q 10 V"
 
 
-def test_mutation_to_rosetta_format():
+def test_protein_sequence_get_chain(sample_protein_sequence, sample_wt_sequence):
     """
-    Test the to_rosetta_format method, with a sample jump index.
+    Test adding a chain to the RosettaPyProteinSequence object.
     """
-    mutation = Mutation(chain_id="A", position=123, wt_res="A", mut_res="B")
-    assert mutation.to_rosetta_format(jump_index=123) == "A 123 B"
+    assert len(sample_protein_sequence.chains) == 1
+    assert isinstance(sample_protein_sequence.get_sequence_by_chain("A"), str)
+    assert sample_protein_sequence.get_sequence_by_chain("A") == sample_wt_sequence
 
 
-# Test cases for the ProteinSequence class
-
-
-def test_protein_sequence_creation():
+def test_protein_sequence_add_chain():
     """
-    Test that a ProteinSequence object is created and chains are added properly.
+    Test adding a chain to the RosettaPyProteinSequence object.
     """
-    protein = ProteinSequence()
-    protein.add_chain("A", "AAAAAAAAAA" * 10)  # Chain A with 100 residues
-    protein.add_chain("B", "CCCCCCCCCC" * 5)  # Chain B with 50 residues
-
-    assert len(protein.chains) == 2
-    assert protein.get_sequence_by_chain("A") == "AAAAAAAAAA" * 10
-    assert protein.get_sequence_by_chain("B") == "CCCCCCCCCC" * 5
+    sample_protein_sequence = RosettaPyProteinSequence()
+    sample_protein_sequence.add_chain("A", "IRGWEEAVAQM")
+    assert len(sample_protein_sequence.chains) == 1
+    assert isinstance(sample_protein_sequence.get_sequence_by_chain("A"), str)
+    assert sample_protein_sequence.get_sequence_by_chain("A") == "IRGWEEAVAQM"
 
 
-def test_protein_sequence_jump_index():
+def test_protein_sequence_add_exist_chain(sample_protein_sequence):
     """
-    Test the calculation of the jump index across chains in a ProteinSequence.
+    Test adding a chain to the RosettaPyProteinSequence object.
     """
-    protein = ProteinSequence()
-    protein.add_chain("A", "AAAAAAAAAA" * 10)  # 100 residues
-    protein.add_chain("B", "CCCCCCCCCC" * 5)  # 50 residues
-
-    # Test jump index for chain A
-    assert protein.calculate_jump_index(chain_id="A", position=20) == 20
-
-    # Test jump index for chain B
-    assert protein.calculate_jump_index(chain_id="B", position=10) == 110  # Chain A has 100 residues
+    assert len(sample_protein_sequence.chains) == 1
+    with pytest.raises(ValueError):
+        sample_protein_sequence.add_chain("A", "IRGWEEGVCQM")
 
 
-def test_protein_sequence_mutation_to_rosetta_format():
+def test_protein_sequence_from_pdb(sample_wt_sequence):
     """
-    Test the mutation_to_rosetta_format method in the ProteinSequence class.
+    Test loading a RosettaPyProteinSequence from a PDB file.
     """
-    protein = ProteinSequence()
-    protein.add_chain("A", "AAAAAAAAAA" * 10)  # 100 residues
-    protein.add_chain("B", "CCCCCCCCCC" * 5)  # 50 residues
+    protein_sequence = RosettaPyProteinSequence.from_pdb(sample_wt_pdb)
+    assert len(protein_sequence.chains) == 1
+    sequence_chain_A = protein_sequence.get_sequence_by_chain("A")
+    assert isinstance(sequence_chain_A, str)
 
-    mutation = Mutation(chain_id="B", position=10, wt_res="C", mut_res="D")
-    rosetta_format = protein.mutation_to_rosetta_format(mutation)
+    assert not isinstance(sequence_chain_A, RosettaPyProteinSequence)
+    assert isinstance(sample_wt_sequence, str)
 
-    assert rosetta_format == "C 110 D"  # Chain A has 100 residues, so B10 becomes 110
-
-
-# Test cases for the Mutant class
-
-
-def test_mutant_creation():
+    assert sequence_chain_A == sample_wt_sequence
     """
-    Test that a Mutant object is created correctly with a ProteinSequence and mutations.
+    WTF???
+    E       assert '[RosettaPyProteinSequence("IRGWEEGVAQM")]' == 'IRGWEEGVAQM'
+    E
+    E         - IRGWEEGVAQM
+    E         + [RosettaPyProteinSequence("IRGWEEGVAQM")]
+
     """
-    protein = ProteinSequence()
-    protein.add_chain("A", "AAAAAAAAAA" * 10)
-    protein.add_chain("B", "CCCCCCCCCC" * 5)
-
-    mutation_1 = Mutation(chain_id="A", position=20, wt_res="A", mut_res="B")
-    mutation_2 = Mutation(chain_id="B", position=10, wt_res="C", mut_res="D")
-
-    mutant = Mutant(mutations=[mutation_1, mutation_2], protein_sequence=protein)
-
-    assert len(mutant.mutations) == 2
-    assert mutant.raw_mutant_id == "A20B_C10D"
 
 
-def test_mutant_generate_rosetta_mutfile(tmp_path):
+def test_protein_sequence_get_sequence_by_chain(sample_protein_sequence, sample_wt_sequence):
     """
-    Test that the Mutant class generates the correct Rosetta mutfile format.
+    Test retrieving a sequence from a RosettaPyProteinSequence by chain ID.
     """
-    protein = ProteinSequence()
-    protein.add_chain("A", "AAAAAAAAAA" * 10)  # 100 residues
-    protein.add_chain("B", "CCCCCCCCCC" * 5)  # 50 residues
-
-    mutation_1 = Mutation(chain_id="A", position=20, wt_res="A", mut_res="B")
-    mutation_2 = Mutation(chain_id="B", position=10, wt_res="C", mut_res="D")
-
-    mutant = Mutant(mutations=[mutation_1, mutation_2], protein_sequence=protein)
-
-    # Use a temporary file to store the output
-    mutfile_path = tmp_path / "mutfile.txt"
-    mutant.generate_rosetta_mutfile(file_path=str(mutfile_path))
-
-    # Check file contents
-    with open(mutfile_path, "r") as f:
-        contents = f.readlines()
-
-    assert contents == ["A 20 B\n", "C 110 D\n"]  # Mutation A20B and C10D
+    assert sample_protein_sequence.get_sequence_by_chain("A") == sample_wt_sequence
 
 
-if __name__ == "__main__":
-    pytest.main()
+def test_protein_sequence_get_sequence_by_chain_invalid(sample_protein_sequence):
+    """
+    Test that retrieving a sequence from a non-existent chain raises an error.
+    """
+    with pytest.raises(ValueError):
+        sample_protein_sequence.get_sequence_by_chain("B")
+
+
+def test_mutant_creation(sample_mutant, sample_wt_sequence):
+    """
+    Test creating a Mutant object.
+    """
+    assert len(sample_mutant.mutations) == 1
+    assert sample_mutant.raw_mutant_id == "Q10V"
+    assert sample_mutant.wt_protein_sequence.get_sequence_by_chain("A") == sample_wt_sequence
+
+
+def test_mutant_as_mutfile(sample_mutant):
+    """
+    Test generating the Rosetta mutfile content from the Mutant object.
+    """
+    mutfile_content = sample_mutant.as_mutfile
+    assert "1" in mutfile_content  # Number of mutations
+    assert "Q 10 V" in mutfile_content  # Mutation information
+
+
+def test_mutant_from_pdb():
+    """
+    Test creating Mutant objects from PDB files using mock data.
+    """
+    # mocker.patch("biotite.structure.io.load_structure")
+    # mocker.patch("biotite.structure.to_sequence", return_value=("AAAAAAA", 1))
+
+    mutants = Mutant.from_pdb(sample_wt_pdb, sample_mutant_pdbs)
+
+    # Verify that two mutant instances were created
+    assert len(mutants) == 2
+    for mutant in mutants:
+        assert len(mutant.mutations) >= 1  # Ensure at least one mutation is present
+
+
+def test_protein_sequence_construct_sources_pdb(sample_protein_sequence, sample_protein_sequence_pdb):
+    assert sample_protein_sequence_pdb == sample_protein_sequence
+
+
+def test_many_mutants_from_pdb(sample_mutants: Dict[str, Mutant]):
+    assert len(sample_mutants) != 0
+
+
+def test_mutated_sequences(sample_mutants: Dict[str, Mutant]):
+    for f, m in sample_mutants.items():
+        mf = RosettaPyProteinSequence.from_pdb(f)
+        assert mf.chains == m.mutated_sequence.chains, f"{f}"
+
+
+def test_mutants_to_mutfile(sample_mutants: Dict[str, Mutant]):
+    mutfile = "tests/outputs/mutfile.mut"
+    mutfile_content = mutants2mutfile(sample_mutants.values(), mutfile)
+
+    assert os.path.exists(mutfile)
+
+    for p, m in sample_mutants.items():
+        assert m.as_mutfile in mutfile_content

@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
-from typing import List
 import os
-from Bio.PDB.PDBParser import PDBParser
-from Bio.PDB import Polypeptide
+from typing import List
+import warnings
+
+import biotite.structure as struc
+import biotite.structure.io as strucio
+import numpy as np
 
 
 @dataclass
@@ -32,6 +35,7 @@ class Chain:
     chain_id: str  # Chain ID (e.g., 'A', 'B', etc.)
     sequence: str  # Amino acid sequence of the chain
 
+    @property
     def length(self) -> int:
         """
         Returns the length of the chain sequence.
@@ -40,8 +44,12 @@ class Chain:
 
 
 @dataclass
-class ProteinSequence:
+class RosettaPyProteinSequence:
     chains: List[Chain] = field(default_factory=list)
+
+    @property
+    def all_chain_ids(self) -> List[str]:
+        return [chain.chain_id for chain in self.chains]
 
     def add_chain(self, chain_id: str, sequence: str):
         """
@@ -51,6 +59,8 @@ class ProteinSequence:
             chain_id (str): Chain ID (e.g., 'A', 'B', etc.)
             sequence (str): Amino acid sequence for the chain.
         """
+        if chain_id in self.all_chain_ids:
+            raise ValueError(f"Chain ID {chain_id} already exists in the protein sequence.")
         self.chains.append(Chain(chain_id=chain_id, sequence=sequence))
 
     def get_sequence_by_chain(self, chain_id: str) -> str:
@@ -66,10 +76,40 @@ class ProteinSequence:
         Raises:
             ValueError: If the chain ID is not found.
         """
-        for chain in self.chains:
-            if chain.chain_id == chain_id:
-                return chain.sequence
-        raise ValueError(f"Chain {chain_id} not found in the protein sequence.")
+        if not chain_id in self.all_chain_ids:
+            raise ValueError(f"Chain {chain_id} not found in the protein sequence.")
+
+        return next(filter(lambda x: x.chain_id == chain_id, self.chains)).sequence
+
+    @classmethod
+    def from_pdb(cls, pdb_file: str) -> "RosettaPyProteinSequence":
+        """
+        Parse a PDB file and extract the amino acid sequence for each chain.
+
+        Args:
+            pdb_file (str): Path to the PDB file.
+
+        Returns:
+            ProteinSequence: An instance of ProteinSequence populated with chains
+                             from the PDB structure.
+        """
+        # Load PDB file
+        structure = strucio.load_structure(pdb_file, model=1)
+
+        chains = []
+        unique_chains = np.unique(structure.chain_id)  # Use numpy.unique() instead of .unique() on the array
+        for chain_id in unique_chains:
+            # Get atoms from the current chain
+            chain_atoms = structure[structure.chain_id == chain_id]
+
+            # Convert the chain atoms to a sequence of amino acids
+            sequence, chain_starts = struc.to_sequence(chain_atoms)
+            sequence = str(sequence[0])
+
+            # Add the chain to the ProteinSequence
+            chains.append(Chain(chain_id=str(chain_id), sequence=str(sequence)))
+
+        return cls(chains=chains)
 
     def calculate_jump_index(self, chain_id: str, position: int) -> int:
         """
@@ -83,13 +123,17 @@ class ProteinSequence:
         Returns:
             int: The jump index across all chains.
         """
+        if not hasattr(self, "_jump_index_cache"):
+            self._jump_index_cache = {}
+        if (chain_id, position) in self._jump_index_cache:
+            return self._jump_index_cache[(chain_id, position)]
         jump_index = 0
         for chain in self.chains:
             if chain.chain_id == chain_id:
                 jump_index += position
                 break
             else:
-                jump_index += chain.length()  # Add the length of the previous chains
+                jump_index += chain.length  # Add the length of the previous chains
         return jump_index
 
     def mutation_to_rosetta_format(self, mutation: Mutation) -> str:
@@ -109,12 +153,37 @@ class ProteinSequence:
 @dataclass
 class Mutant:
     mutations: List[Mutation]  # List of Mutation objects representing mutations
-    protein_sequence: ProteinSequence  # ProteinSequence object to handle chain sequences
+    wt_protein_sequence: RosettaPyProteinSequence  # ProteinSequence object to handle chain sequences
     _mutant_score: float = field(default_factory=float)
     _mutant_description: str = ""
     _pdb_fp: str = ""
     _mutant_id: str = ""
     _wt_score: float = 0.0
+
+    def get_mutated_chain(self, chain_id) -> Chain:
+        """
+        Returns the mutated chain with the given chain_id.
+        """
+        sequence = list(self.wt_protein_sequence.get_sequence_by_chain(chain_id))
+        for mutation in filter(lambda m: m.chain_id == chain_id, self.mutations):
+            pos = mutation.position
+            assert isinstance(mutation, Mutation)
+            if sequence[pos - 1] != mutation.wt_res:
+                raise ValueError(
+                    f"Mutation {mutation} does not match the wild-type sequence on position <{pos}>:<{sequence[pos-1]}>:<{mutation.wt_res}>."
+                )
+            sequence[pos - 1] = mutation.mut_res
+
+        return "".join(sequence)
+
+    @property
+    def mutated_sequence(self) -> RosettaPyProteinSequence:
+        return RosettaPyProteinSequence(
+            chains=[
+                Chain(chain_id=chain_id, sequence=self.get_mutated_chain(chain_id=chain_id))
+                for chain_id in self.wt_protein_sequence.all_chain_ids
+            ]
+        )
 
     def __post_init__(self):
         """
@@ -133,6 +202,12 @@ class Mutant:
         if not all(isinstance(mutation, Mutation) for mutation in self.mutations):
             raise TypeError("All elements in mutations must be instances of the Mutation class.")
 
+    @property
+    def as_mutfile(self) -> str:
+        return f"{len(self.mutations)}\n" + "\n".join(
+            [self.wt_protein_sequence.mutation_to_rosetta_format(mutation=mutation) for mutation in self.mutations]
+        )
+
     def generate_rosetta_mutfile(self, file_path: str):
         """
         Saves all mutations to a file in Rosetta's mutfile format with calculated jump indices.
@@ -142,7 +217,7 @@ class Mutant:
         """
         with open(file_path, "w") as file:
             for mutation in self.mutations:
-                rosetta_format = self.protein_sequence.mutation_to_rosetta_format(mutation)
+                rosetta_format = self.wt_protein_sequence.mutation_to_rosetta_format(mutation)
                 file.write(f"{rosetta_format}\n")
 
     @property
@@ -169,43 +244,68 @@ class Mutant:
         self._mutant_score = float(value)
 
     @classmethod
-    def from_pdb(cls, pdb_fp: str, mutant_sequences: dict) -> "Mutant":
+    def from_pdb(cls, wt_pdb: str, mutant_pdb: List[str]) -> List["Mutant"]:
         """
-        Class method that generates a Mutant object by comparing the wild-type sequence
-        extracted from a PDB file with a provided mutant sequence.
+        Creates a list of `Mutant` instances by comparing the wild-type structure (wt_pdb)
+        with the mutant structures (mutant_pdb). Each mutant structure generates one `Mutant` instance.
 
         Args:
-            pdb_fp (str): Path to the PDB file (wild-type).
-            mutant_sequences (dict): Dictionary where keys are chain IDs and values are mutant sequences.
+            wt_pdb (str): Path to the wild-type PDB file.
+            mutant_pdb (List[str]): List of paths to mutant PDB files.
 
         Returns:
-            Mutant: A Mutant object containing the list of mutations and the protein sequence.
+            List[Mutant]: List of Mutant instances created by comparing the wild-type structure with mutants.
         """
-        # Parse the PDB file to extract the wild-type sequence
-        pdb_parser = PDBParser()
-        structure = pdb_parser.get_structure("WT", pdb_fp)
+        wt_protein = RosettaPyProteinSequence.from_pdb(wt_pdb)
 
-        # Initialize a ProteinSequence object to store the WT sequence
-        protein_sequence = ProteinSequence()
+        mutants = []
+        for pdb_file in mutant_pdb:
+            if not os.path.exists(pdb_file):
+                raise FileNotFoundError(f"Could not find PDB file: {pdb_file}")
+            mutant_protein = RosettaPyProteinSequence.from_pdb(pdb_file)
 
-        # Extract the WT sequence from the PDB file and add it to the ProteinSequence object
-        for model in structure:
-            for chain in model:
-                chain_id = chain.id
-                wt_sequence = ""
-                for residue in chain.get_residues():
-                    if PDB.is_aa(residue, standard=True):  # Include only standard amino acids
-                        wt_sequence += PDB.Polypeptide.three_to_one(residue.get_resname())
-                protein_sequence.add_chain(chain_id, wt_sequence)
+            mutations = []
+            # Compare the sequences of wild-type and mutant
+            for wt_chain in wt_protein.chains:
+                mutant_chain = mutant_protein.get_sequence_by_chain(wt_chain.chain_id)
 
-        # Compare WT sequence with the mutant sequence to find mutations
-        mutations = []
-        for chain_id, wt_seq in protein_sequence.chains:
-            mutant_seq = mutant_sequences.get(chain_id, "")
-            for pos, (wt_res, mut_res) in enumerate(zip(wt_seq.sequence, mutant_seq), start=1):
-                if wt_res != mut_res:
-                    mutation = Mutation(chain_id=chain_id, position=pos, wt_res=wt_res, mut_res=mut_res)
-                    mutations.append(mutation)
+                # Iterate through residues to find differences
+                for i, (wt_res, mut_res) in enumerate(zip(wt_chain.sequence, mutant_chain)):
+                    if wt_res != mut_res:
+                        mutation = Mutation(
+                            chain_id=wt_chain.chain_id,
+                            position=i + 1,  # Convert to 1-based index
+                            wt_res=wt_res,
+                            mut_res=mut_res,
+                        )
+                        mutations.append(mutation)
 
-        # Create and return the Mutant object
-        return cls(mutations=mutations, protein_sequence=protein_sequence, _pdb_fp=pdb_fp)
+            # Create Mutant instance for this pdb
+            mutant_instance = cls(mutations=mutations, wt_protein_sequence=wt_protein)
+            mutants.append(mutant_instance)
+
+        return mutants
+
+
+def mutants2mutfile(mutants: List[Mutant], file_path: str) -> str:
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    as_mutfile = "\n".join(mutant.as_mutfile for mutant in mutants)
+
+    mutfile_content = f"total {len([_m for m in mutants for _m in m.mutations])}\n{as_mutfile}"
+    with open(file_path, "w") as file:
+        file.write(mutfile_content)
+    return mutfile_content
+
+
+def main():
+    for pdb in os.listdir("tests/data/designed/pross"):
+        seq = RosettaPyProteinSequence.from_pdb(f"tests/data/designed/pross/{pdb}")
+        print(f"{pdb}: {str(seq.chains[0].sequence)}")
+
+
+if __name__ == "__main__":
+    wt = RosettaPyProteinSequence.from_pdb(
+        "/Users/yyy/Documents/protein_design/rosetta_finder/tests/data/3fap_hf3_A_short.pdb"
+    )
+    print(f"3fap_hf3_A_short.pdb: {str(wt.chains[0].sequence)}")
+    main()

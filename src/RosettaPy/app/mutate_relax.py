@@ -1,11 +1,11 @@
 import os
-from typing import List, Optional
+from typing import List
 from dataclasses import dataclass
 
 from Bio.Data import IUPACData
 from Bio.SeqIO import parse
 
-from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser, MPI_node
+from RosettaPy import Rosetta, RosettaScriptsVariableGroup, RosettaEnergyUnitAnalyser
 from RosettaPy.utils import timing
 
 
@@ -62,8 +62,8 @@ class ScoreClusters:
             }
             for variant in variants
         ]
-
-        rosetta.run(inputs=branch_tasks)
+        with timing("Score clusters"):
+            rosetta.run(inputs=branch_tasks)
 
         return RosettaEnergyUnitAnalyser(rosetta.output_scorefile_dir)
 
@@ -88,7 +88,7 @@ class ScoreClusters:
         mut_array = mut_info.split("_")
         mut_task = ""
         for mut_id in mut_array:
-            resid = mut_id[1 : -1]
+            resid = mut_id[1:-1]
             new_mut_task = resid + chain_id
             if mut_task == "":
                 mut_task = new_mut_task
@@ -124,14 +124,14 @@ class ScoreClusters:
         mut_array = mut_info.split("_")
         mut_protocol = ""
 
-        for i,mut_id in enumerate(mut_array):
+        for i, mut_id in enumerate(mut_array):
             new_mut_protocol = f'<Add mover_name="mr{i}"/>'
             mut_protocol += new_mut_protocol
 
         return mut_protocol
 
 
-def main(num_mut:int=1):
+def main(num_mut: int = 1):
     scorer = ScoreClusters(pdb="tests/data/1SUO.pdb", chain_id="A")
 
     ret = scorer.run(f"tests/data/cluster/1SUO_A_1SUO.ent.mut_designs_{num_mut}")
